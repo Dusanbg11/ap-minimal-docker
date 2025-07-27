@@ -29,7 +29,7 @@
                 <div class="card-body">
                     <h5 class="card-title text-danger">{{ label }}</h5>
                     <p class="card-text">Delete all {{ icon }} from the system.</p>
-                    <form method="POST" action="{{ url_for(route) }}" onsubmit="return handleSubmit(this, '{{ icon }}')">
+                    <form onsubmit="return handleWipeSubmit(event, '{{ url_for(route) }}', '{{ icon }}')">
                         <input type="password" name="password" class="form-control mb-2" placeholder="Password confirmation required" required>
                         <button type="submit" class="btn btn-outline-danger">Delete</button>
                     </form>
@@ -46,14 +46,19 @@
 </div>
 
 <script>
-function handleSubmit(form, itemType) {
-    const password = form.password.value.trim();
+function handleWipeSubmit(event, actionUrl, itemType) {
+    event.preventDefault();
+
+    const form = event.target;
+    const passwordInput = form.querySelector('input[name="password"]');
+    const password = passwordInput.value.trim();
+
     if (!password) {
         alert("Password is required.");
         return false;
     }
 
-    return fetch("{{ url_for('admin.verify_password') }}", {
+    fetch("{{ url_for('admin.verify_password') }}", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded"
@@ -63,17 +68,31 @@ function handleSubmit(form, itemType) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            return confirm(`Password correct. Are you sure you want to delete ${itemType}?`);
+            if (confirm(`Password correct. Are you sure you want to delete ${itemType}?`)) {
+                // Manual form submission with password
+                const tempForm = document.createElement("form");
+                tempForm.method = "POST";
+                tempForm.action = actionUrl;
+
+                const passwordField = document.createElement("input");
+                passwordField.type = "hidden";
+                passwordField.name = "password";
+                passwordField.value = password;
+                tempForm.appendChild(passwordField);
+
+                document.body.appendChild(tempForm);
+                tempForm.submit();
+            }
         } else {
             alert("Incorrect password.");
-            return false;
         }
     })
     .catch(err => {
         console.error(err);
         alert("An error occurred while verifying the password.");
-        return false;
     });
+
+    return false;
 }
 </script>
 {% endblock %}

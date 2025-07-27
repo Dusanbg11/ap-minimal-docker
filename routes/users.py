@@ -204,7 +204,7 @@ def add_user():
     full_name = request.form['full_name']
     email = request.form['email']
     note = request.form['note']
-
+    role = request.form['role']
     cur = mysql.connection.cursor()
 
     # Check for existing email
@@ -218,8 +218,8 @@ def add_user():
 
     # Insert new user
     cur.execute(
-        "INSERT INTO app_users (full_name, email, note) VALUES (%s, %s, %s)",
-        (full_name, email, note)
+        "INSERT INTO app_users (full_name, email, note, role) VALUES (%s, %s, %s, %s)",
+        (full_name, email, note, role)
     )
     mysql.connection.commit()
 

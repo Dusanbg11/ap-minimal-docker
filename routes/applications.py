@@ -225,7 +225,7 @@ def view_application(application_id):
     """, (application_id,))
     linked_users = cur.fetchall()
 
-    cur.execute("SELECT id, full_name FROM app_users")
+    cur.execute("SELECT id, full_name FROM app_users ORDER BY full_name ASC")
     all_users = cur.fetchall()
     cur.close()
 

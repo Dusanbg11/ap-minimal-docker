@@ -6,6 +6,7 @@ import subprocess
 import datetime
 import os
 from datetime import timedelta
+import shutil
 
 settings_bp = Blueprint('settings_bp', __name__, url_prefix='/settings')
 
@@ -148,7 +149,7 @@ def change_password():
         cur.execute("UPDATE users SET password=%s WHERE id=%s", (hashed_password, session['user_id']))
         mysql.connection.commit()
         cur.close()
-        log_action(session['user_id'], "Changed their own password")
+        log_action(session['username'], "Changed their own password", "user", session['username'])
         flash("Password changed successfully.", "success")
         return redirect('/settings')
     return render_template('change_password.html')
@@ -164,21 +165,30 @@ def theme_settings():
         return redirect('/settings')
     return render_template('theme_settings.html')
 
+
 @settings_bp.route('/import')
 def csv_import():
+    if 'user_id' not in session:
+        return render_template('access_denied.html'), 403
     return render_template('csv_import.html')
 
 # 💾 Database Backup
 @settings_bp.route('/backup')
 def backup_database():
-    if 'user_id' not in session or not session.get('is_admin'):
+    if 'user_id' not in session:
         return redirect('/')
+
+    if not shutil.which("mysqldump"):
+        flash("Backup failed: 'mysqldump' utility not found on the server.", "danger")
+        return redirect('/settings')
+
     db_user = current_app.config['MYSQL_USER']
     db_password = current_app.config['MYSQL_PASSWORD']
     db_name = current_app.config['MYSQL_DB']
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"backup_{db_name}_{timestamp}.sql"
     filepath = os.path.join("/tmp", filename)
+
     try:
         command = [
             "mysqldump",
@@ -188,7 +198,14 @@ def backup_database():
         ]
         with open(filepath, "w") as f:
             subprocess.run(command, stdout=f, check=True)
-        return send_file(filepath, as_attachment=True, mimetype='application/sql', download_name=filename)
+
+        return send_file(
+            filepath,
+            as_attachment=True,
+            mimetype='application/sql',
+            download_name=filename
+        )
+
     except Exception as e:
         flash(f"Error during backup: {e}", "danger")
         return redirect('/settings')

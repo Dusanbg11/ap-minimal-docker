@@ -82,10 +82,15 @@ def login():
             flash('Incorrect username or password', 'danger')
     return render_template('login.html')
 
+
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect('/')
+
+    from routes.settings_admin import delete_old_audit_logs
+    delete_old_audit_logs()
+
     return render_template('dashboard.html', username=session['username'])
 
 @app.route('/logout')
@@ -93,6 +98,8 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
+
+
 
 # Pokretanje aplikacije
 if __name__ == '__main__':
