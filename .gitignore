@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+env/
+
+# pytest cache
+.pytest_cache/
+
+# Logs
+nohup.out
+
+# VS Code
+.vscode/
