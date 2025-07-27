@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Edit Server{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Server</h2>
+    <form method="POST" action="{{ url_for('servers_bp.edit_server', server_id=server[0]) }}">
+        <div class="mb-3">
+            <label for="name" class="form-label">Server Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ server[1] }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="ip_address" class="form-label">IP Address</label>
+            <input type="text" class="form-control" id="ip_address" name="ip_address" value="{{ server[2] }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ server[3] }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+        <a href="{{ url_for('servers_bp.servers') }}" class="btn btn-secondary">← Back</a>
+    </form>
+</div>
+{% endblock %}
+

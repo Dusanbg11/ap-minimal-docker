@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}User Details{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="bi bi-person-circle me-2"></i> User: {{ user[1] }}</h1>
+        <a href="/users" class="btn btn-secondary">
+            ← Back to Users
+        </a>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title text-primary"><i class="bi bi-info-circle me-1"></i> User Information</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> {{ user[2] }}</p>
+                    <p><strong>Note:</strong> {{ user[3] }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Role:</strong> {{ user[4] }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Linked Servers -->
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-success"><i class="bi bi-hdd-network me-1"></i> Linked Servers</h5>
+                    {% if servers %}
+                    <ul class="list-group list-group-flush">
+                        {% for s in servers %}
+                        <li class="list-group-item">
+                            <strong>{{ s[1] }}</strong> ({{ s[2] }})<br>
+                            <small class="text-muted">{{ s[3] }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No linked servers.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Linked Applications -->
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-info"><i class="bi bi-box-seam me-1"></i> Linked Applications</h5>
+                    {% if applications %}
+                    <ul class="list-group list-group-flush">
+                        {% for a in applications %}
+                        <li class="list-group-item">
+                            <strong>{{ a[1] }}</strong> v{{ a[2] }}<br>
+                            <small class="text-muted">{{ a[3] }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No linked applications.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-end">
+        <a href="{{ url_for('users_bp.export_user_links', user_id=user[0]) }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-download me-1"></i> Export as CSV
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}
+

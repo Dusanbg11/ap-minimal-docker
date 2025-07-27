@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Izmena korisnika{% endblock %}
+{% block content %}
+
+<h1 class="mb-4">Izmena korisnika</h1>
+
+<form action="/users/edit/{{ user[0] }}" method="POST" class="row g-3">
+    <div class="col-md-4">
+        <label for="full_name" class="form-label">Full Name</label>
+        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user[1] }}" required>
+    </div>
+    <div class="col-md-4">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" id="email" name="email" class="form-control" value="{{ user[2] }}" required>
+    </div>
+    <div class="col-md-4">
+        <label for="note" class="form-label">Note</label>
+        <input type="text" id="note" name="note" class="form-control" value="{{ user[3] }}">
+    </div>
+    <div class="col-md-4">
+        <label for="role" class="form-label">Role</label>
+        <input type="text" id="role" name="role" class="form-control" value="{{ user[4] }}">
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-success w-100">Save changes</button>
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <a href="/users" class="btn btn-secondary w-100">Nazad</a>
+    </div>
+</form>
+
+{% endblock %}
+

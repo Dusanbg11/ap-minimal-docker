@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Servers{% endblock %}
+{% block content %}
+
+<h1 class="mb-4">Servers</h1>
+<a href="/dashboard" class="btn btn-secondary mb-3">← Back to Dashboard</a>
+
+<form action="{{ url_for('servers_bp.add_server') }}" method="POST" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <input type="text" name="name" class="form-control" placeholder="Server name" required>
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="ip_address" class="form-control" placeholder="IP address" required>
+    </div>
+    <div class="col-md-4">
+        <textarea name="description" class="form-control" placeholder="Description"></textarea>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Add Server</button>
+    </div>
+</form>
+
+<!-- Kontrole iznad tabele -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+
+    <!-- Levo: Export -->
+    <a href="{{ url_for('servers_bp.export_servers_csv') }}" class="btn btn-outline-success">
+        ⬇ Export to CSV
+    </a>
+
+    <!-- Desno: Search + Per page -->
+    <div class="d-flex align-items-center gap-2">
+
+        <!-- Live Search -->
+        <input type="text" id="liveSearch" class="form-control" placeholder="Search..." style="min-width: 200px;">
+
+        <!-- Per page dropdown -->
+        <form method="get" class="mb-0">
+            <input type="hidden" name="search" value="{{ search_query }}">
+            <input type="hidden" name="page" value="1">
+            <select name="per_page" onchange="this.form.submit()" class="form-select" style="min-width: 150px;">
+                {% for option in [5, 10, 25, 50, 100] %}
+                    <option value="{{ option }}" {% if per_page == option %}selected{% endif %}>
+                        {{ option }} per page
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+    </div>
+</div>
+
+<!-- Servers Table -->
+<table class="table table-bordered table-striped table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Name</th>
+            <th>IP Address</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for server in servers %}
+        <tr>
+            <td><a href="{{ url_for('servers_bp.view_server', server_id=server[0]) }}">{{ server[1] }}</a></td>
+            <td>{{ server[2] }}</td>
+            <td>{{ server[3] }}</td>
+            <td>
+                <a href="{{ url_for('servers_bp.edit_server', server_id=server[0]) }}" class="btn btn-sm btn-warning">Edit</a>
+                <form action="{{ url_for('servers_bp.delete_server', server_id=server[0]) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this server?');">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Info + Paginacija ispod tabele -->
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div>
+        <p class="mb-0">Showing {{ servers|length }} of {{ total_entries }} entries</p>
+    </div>
+    <nav>
+        <ul class="pagination mb-0">
+            {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('servers_bp.servers', search=search_query, page=p, per_page=per_page) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+</div>
+
+<!-- Live Search Script -->
+<script>
+document.getElementById('liveSearch').addEventListener('input', function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('table tbody tr');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+    });
+});
+</script>
+
+{% endblock %}
+

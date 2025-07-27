@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - AP Minimal{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Welcome, {{ session['username'] }}!</h1>
+    <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-outline-secondary" title="Settings">
+        <i class="bi bi-gear-fill"></i>
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-primary h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Servers</h5>
+                <p class="card-text">Manage all registered servers in the system.</p>
+                <a href="{{ url_for('servers_bp.servers') }}" class="btn btn-outline-primary">Go to Servers</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Applications</h5>
+                <p class="card-text">View and manage software applications.</p>
+                <a href="{{ url_for('applications_bp.applications') }}" class="btn btn-outline-success">Go to Applications</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Users</h5>
+                <p class="card-text">Browse and assign users.</p>
+                <a href="{{ url_for('users_bp.users') }}" class="btn btn-outline-info">Go to Users</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

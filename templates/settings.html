@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Settings</h1>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">👥 User Accounts</h5>
+                    <p class="card-text">Manage user accounts, roles, and access levels.</p>
+                    <a href="/settings/accounts" class="btn btn-outline-primary">Go to Accounts</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">💾 Database Backup</h5>
+                    <p class="card-text">Download a full backup of the application database.</p>
+                    <a href="{{ url_for('settings_bp.backup_database') }}" class="btn btn-outline-primary">Backup Now</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">🎨 Theme & Appearance</h5>
+                    <p class="card-text">Switch between light/dark mode and color schemes.</p>
+                    <a href="/settings/theme" class="btn btn-outline-primary">Change Theme</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">🔄 Change Password</h5>
+                    <p class="card-text">Update your password to keep your account secure.</p>
+                    <a href="{{ url_for('settings_bp.change_password') }}" class="btn btn-outline-primary">Change Password</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import from CSV -->
+        <div class="col">
+            <div class="card h-100 border-primary shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">📅 Import from CSV</h5>
+                    <p class="card-text">Upload CSV files to bulk import users, servers, or applications.</p>
+                    <a href="/settings/import" class="btn btn-outline-primary">Go to Import</a>
+                </div>
+            </div>
+        </div>
+
+        {% if session.get('is_admin') %}
+        <div class="col">
+            <div class="card h-100 border-danger shadow">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">👑 Administration</h5>
+                    <p class="card-text">Maintenance mode, critical actions, and data cleanup.</p>
+                    <a href="{{ url_for('admin.admin_panel') }}" class="btn btn-outline-danger">Admin Tools</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <a href="/dashboard" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+

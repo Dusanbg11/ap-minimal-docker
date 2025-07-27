@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Edit Application{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Edit Application</h1>
+
+    <form action="{{ url_for('applications_bp.edit_application', application_id=application[0]) }}" method="POST" class="row g-3">
+
+        <div class="col-md-4">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" class="form-control" value="{{ application[1] }}" required>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Version</label>
+            <input type="text" name="version" class="form-control" value="{{ application[2] }}">
+        </div>
+
+        <div class="col-md-5">
+            <label class="form-label">Server</label>
+            <select name="server_id" class="form-select">
+                <option value="">No Server</option>
+                {% for s in servers %}
+                    <option value="{{ s[0] }}" {% if s[0] == application[4] %}selected{% endif %}>{{ s[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control">{{ application[3] }}</textarea>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{{ url_for('applications_bp.applications') }}" class="btn btn-secondary ms-2">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Server Details{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{ server[1] }}</h2>
+        <a href="{{ url_for('servers_bp.servers') }}" class="btn btn-secondary">← Back</a>
+    </div>
+
+    <div class="card border-primary shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">Server Information</div>
+        <div class="card-body">
+            <p><strong>IP Address:</strong> {{ server[2] }}</p>
+            <p><strong>Description:</strong> {{ server[3] or '—' }}</p>
+        </div>
+    </div>
+
+    <div class="card border-info shadow-sm mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <span>Linked Users</span>
+            {% if users %}
+            <a href="{{ url_for('servers_bp.export_users_for_server', server_id=server[0]) }}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-download me-1"></i> Export Users to CSV
+            </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if users %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Note</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user[1] }}</td>
+                            <td>{{ user[2] }}</td>
+                            <td>{{ user[3] or '—' }}</td>
+                            <td>{{ user[4] or '—' }}</td>
+                            <td>
+                                <form action="{{ url_for('servers_bp.remove_user_from_server', server_id=server[0], user_id=user[0]) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this user?')">🗑 Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No users are currently linked to this server.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card border-success shadow-sm mb-5">
+        <div class="card-header bg-success text-white">Assign New User</div>
+        <div class="card-body">
+            <form action="{{ url_for('servers_bp.assign_user_to_server', server_id=server[0]) }}" method="POST" class="row g-3">
+                <div class="col-md-6">
+                    <select name="user_id" class="form-select" required>
+                        {% for user in all_users %}
+                        <option value="{{ user[0] }}">{{ user[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-success w-100">Assign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

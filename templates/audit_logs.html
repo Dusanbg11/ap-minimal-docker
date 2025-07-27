@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Audit Logs{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Audit Logs</h1>
+
+    <div class="row align-items-stretch mb-4">
+        <!-- Left side: Export & Back -->
+        <div class="col-md-6 d-flex gap-2 flex-wrap align-items-stretch">
+            <a href="{{ url_for('admin.export_logs') }}" class="btn btn-outline-secondary w-auto">⬇ Export as TXT</a>
+            <a href="{{ url_for('admin.admin_panel') }}" class="btn btn-secondary w-auto">← Back to Administrator page</a>
+        </div>
+
+        <!-- Right side: Retention + Password + Delete -->
+        <div class="col-md-6 d-flex justify-content-end gap-2 flex-wrap align-items-stretch">
+            <form method="POST" action="{{ url_for('admin.update_log_retention') }}" class="d-flex align-items-stretch">
+                <div class="input-group">
+                    <span class="input-group-text">Retention</span>
+                    <select name="log_days" class="form-select" onchange="this.form.submit()">
+                        {% for option in [30, 90, 180, 360] %}
+                            <option value="{{ option }}" {% if current_retention == option %}selected{% endif %}>
+                                {{ option }} days
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+
+            <form action="{{ url_for('admin.wipe_logs') }}" method="POST" onsubmit="return confirmPasswordBeforeSubmit(event, this);" class="d-flex gap-2 align-items-stretch">
+                <input type="password" name="password" class="form-control" placeholder="Confirm admin password" required>
+                <button type="submit" class="btn btn-danger text-nowrap px-3">
+			🗑 Delete All Logs
+		</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Target Type</th>
+                    <th>Target Name</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.timestamp }}</td>
+                    <td>{{ log.actor }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.target_type }}</td>
+                    <td>{{ log.target_name }}</td>
+                    <td>{{ log.details }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function confirmPasswordBeforeSubmit(event, form) {
+    event.preventDefault();
+    const password = form.querySelector('input[name="password"]').value;
+
+    fetch('/settings/admin/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `password=${encodeURIComponent(password)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (confirm('Are you sure you want to proceed? This action cannot be undone.')) {
+                form.submit();
+            }
+        } else {
+            alert('Incorrect password. Action cancelled.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('An error occurred during password verification.');
+    });
+
+    return false;
+}
+</script>
+{% endblock %}
+

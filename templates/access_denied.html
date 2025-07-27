@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Access Denied{% endblock %}
+{% block content %}
+<div class="alert alert-danger mt-4" role="alert">
+    <h4 class="alert-heading">Access Denied</h4>
+    <p>You do not have permission to view this page.</p>
+    <hr>
+    <a href="/dashboard" class="btn btn-primary">← Back to Dashboard</a>
+</div>
+{% endblock %}
+

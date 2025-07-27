@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Application Details{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h1 class="mb-3">Application: {{ application[1] }}</h1>
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{{ url_for('applications_bp.export_application_csv', application_id=application[0]) }}"
+           class="btn btn-outline-primary">
+           ⬇ Export Linked Users as CSV
+        </a>
+        <a href="{{ url_for('applications_bp.applications') }}" class="btn btn-secondary">
+            ← Back to Applications
+        </a>
+    </div>
+
+    <p><strong>Version:</strong> {{ application[2] }}</p>
+    <p><strong>Description:</strong> {{ application[3] }}</p>
+
+    <hr class="my-4">
+
+    <h3>Linked Users</h3>
+
+    {% if users %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover mt-3">
+                <thead class="table-light">
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Note</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user[1] }}</td>
+                        <td>{{ user[2] }}</td>
+                        <td>{{ user[3] }}</td>
+                        <td>{{ user[4] }}</td>
+                        <td>
+                            <form action="{{ url_for('applications_bp.remove_user_from_application', application_id=application[0], user_id=user[0]) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this user?')">🗑 Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted mt-3">No users linked to this application.</p>
+    {% endif %}
+
+    <hr class="my-5">
+
+    <h4>Assign a User to This Application</h4>
+    <form action="{{ url_for('applications_bp.assign_user_to_application', application_id=application[0]) }}" method="POST" class="row g-3 mb-4 mt-2">
+        <div class="col-md-6 col-lg-4">
+            <select name="user_id" class="form-select" required>
+                {% for user in all_users %}
+                    <option value="{{ user[0] }}">{{ user[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Assign</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

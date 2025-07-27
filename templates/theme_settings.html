@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Theme & Appearance{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Theme & Appearance</h1>
+    
+    <form id="theme-form">
+        <div class="mb-3">
+            <label for="theme" class="form-label">Choose Theme</label>
+            <select class="form-select" name="theme" id="theme">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">System Default</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Preferences</button>
+	<a href="{{ url_for('settings_bp.settings') }}" class="btn btn-secondary">← Back to settings</a>
+    </form>
+</div>
+
+<script>
+    // Set initial selection from localStorage or default to "auto"
+    const savedTheme = localStorage.getItem("theme") || "auto";
+    document.getElementById("theme").value = savedTheme;
+
+    document.getElementById("theme-form").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const selected = document.getElementById("theme").value;
+
+        if (selected === "auto") {
+            localStorage.removeItem("theme");
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+        } else {
+            localStorage.setItem("theme", selected);
+            document.documentElement.setAttribute("data-theme", selected);
+        }
+
+        // Optional: alert or flash message
+        alert("Theme updated!");
+    });
+</script>
+
+{% endblock %}
+

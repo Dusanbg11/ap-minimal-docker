@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block title %}Maintenance Mode{% endblock %}
+
+{% block content %}
+<style>
+    .gear {
+        font-size: 64px;
+        color: #ffc107;
+        animation: spin 4s linear infinite;
+    }
+    .gear:nth-child(2) {
+        animation-duration: 6s;
+        font-size: 48px;
+        margin-left: 10px;
+    }
+    .gear:nth-child(3) {
+        animation-direction: reverse;
+        animation-duration: 5s;
+        font-size: 40px;
+        margin-left: 10px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="container mt-5 text-center">
+    <div class="mb-4">
+        <i class="gear fas fa-cog"></i>
+        <i class="gear fas fa-cog"></i>
+        <i class="gear fas fa-cog"></i>
+    </div>
+    <h1 class="text-warning display-4">Maintenance Mode</h1>
+    <p class="lead mt-3">
+        The application is temporarily unavailable due to maintenance.<br>
+        We'll be back online shortly.
+    </p>
+    <p class="text-muted">Thank you for your patience!</p>
+</div>
+{% endblock %}
+

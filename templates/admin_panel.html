@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-danger">👑 Admin Panel</h2>
+    <p class="mb-4">Access to critical operations that can significantly alter or delete data.</p>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+
+        <!-- Audit Logs -->
+        <div class="col">
+            <div class="card h-100 border-info shadow">
+                <div class="card-body">
+                    <h5 class="card-title text-info">💬 Audit Logs</h5>
+                    <p class="card-text">Review activity logs to see changes made by users.</p>
+                    <a href="{{ url_for('admin.view_logs') }}" class="btn btn-outline-info">View Logs</a>
+                </div>
+            </div>
+        </div>
+
+        {% for action, label, icon, route in [
+            ('wipe_accounts', '🧹   Delete Login Accounts', 'login accounts', 'admin.wipe_accounts'),
+            ('wipe_app_users', '👥 Delete Application Users', 'application users', 'admin.wipe_app_users'),
+            ('wipe_servers', '🗑️   Delete Servers', 'servers', 'admin.wipe_servers'),
+            ('wipe_apps', '📂 Delete Applications', 'applications', 'admin.wipe_apps'),
+            ('hard_reset', '⚠️ Hard Reset', 'everything (hard reset)', 'admin.hard_reset')
+        ] %}
+        <div class="col">
+            <div class="card h-100 border-danger shadow">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">{{ label }}</h5>
+                    <p class="card-text">Delete all {{ icon }} from the system.</p>
+                    <form method="POST" action="{{ url_for(route) }}" onsubmit="return handleSubmit(this, '{{ icon }}')">
+                        <input type="password" name="password" class="form-control mb-2" placeholder="Password confirmation required" required>
+                        <button type="submit" class="btn btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-secondary">← Back to Settings</a>
+    </div>
+</div>
+
+<script>
+function handleSubmit(form, itemType) {
+    const password = form.password.value.trim();
+    if (!password) {
+        alert("Password is required.");
+        return false;
+    }
+
+    return fetch("{{ url_for('admin.verify_password') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            return confirm(`Password correct. Are you sure you want to delete ${itemType}?`);
+        } else {
+            alert("Incorrect password.");
+            return false;
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("An error occurred while verifying the password.");
+        return false;
+    });
+}
+</script>
+{% endblock %}
+

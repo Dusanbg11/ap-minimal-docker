@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Import from CSV{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-primary">📅 Import from CSV</h2>
+
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs mb-3" id="csvImportTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">Users</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="servers-tab" data-bs-toggle="tab" data-bs-target="#servers" type="button" role="tab">Servers</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="apps-tab" data-bs-toggle="tab" data-bs-target="#apps" type="button" role="tab">Applications</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="csvImportTabsContent">
+
+                <!-- Users Import -->
+                <div class="tab-pane fade show active" id="users" role="tabpanel">
+                    <form method="POST" action="{{ url_for('admin.import_users_csv') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="file" name="csv_file" accept=".csv" class="form-control" required>
+                            <small class="form-text text-muted mt-2">
+                                Must contain: <code>full_name</code>, <code>email</code>, <code>note</code>, <code>role</code>.<br>
+                                <a href="{{ url_for('admin.download_users_template') }}">📄 Download template</a>
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">Upload Users CSV</button>
+                    </form>
+                </div>
+
+                <!-- Servers Import -->
+                <div class="tab-pane fade" id="servers" role="tabpanel">
+                    <form method="POST" action="{{ url_for('admin.import_servers_csv') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="file" name="csv_file" accept=".csv" class="form-control" required>
+                            <small class="form-text text-muted mt-2">
+                                Must contain: <code>name</code>, <code>ip_address</code>, <code>description</code>.<br>
+                                <a href="{{ url_for('admin.download_servers_template') }}">📄 Download template</a>
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">Upload Servers CSV</button>
+                    </form>
+                </div>
+
+                <!-- Applications Import -->
+                <div class="tab-pane fade" id="apps" role="tabpanel">
+                    <form method="POST" action="{{ url_for('admin.import_applications_csv') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="file" name="csv_file" accept=".csv" class="form-control" required>
+                            <small class="form-text text-muted mt-2">
+                                Must contain: <code>name</code>, <code>version</code>, <code>description</code>.<br>
+                                <a href="{{ url_for('admin.download_applications_template') }}">📄 Download template</a>
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">Upload Applications CSV</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('settings_bp.settings') }}" class="btn btn-secondary">← Back to Settings</a>
+    </div>
+</div>
+{% endblock %}
+

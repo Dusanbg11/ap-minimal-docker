@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Accounts</h2>
+
+    <a href="/settings" class="btn btn-secondary mb-3">&larr; Back to settings</a>
+
+    <form action="/settings/accounts/add" method="POST" class="row g-2 align-items-end mb-4">
+        <div class="col-md-4">
+            <input type="text" name="username" placeholder="Username" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+            <input type="password" name="password" placeholder="Password" class="form-control" required>
+        </div>
+        <div class="col-md-2 form-check">
+            <input class="form-check-input" type="checkbox" name="is_admin" id="is_admin">
+            <label class="form-check-label" for="is_admin">Administrator</label>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Add account</button>
+        </div>
+    </form>
+
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Username</th>
+                <th>Admin</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user[1] }}</td>
+                <td>{{ 'Yes' if user[3] else 'No' }}</td>
+                <td class="text-center">
+                    <a href="/settings/accounts/edit/{{ user[0] }}" class="btn btn-sm btn-warning me-1">Edit</a>
+                    <form action="/settings/accounts/delete/{{ user[0] }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Da li ste sigurni da želite da obrišete ovaj nalog?');">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

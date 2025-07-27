@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Session Timeout Settings</h2>
+<form method="POST">
+    <div class="form-group">
+        <label for="timeout_minutes">Session timeout (in minutes):</label>
+        <input type="number" id="timeout_minutes" name="timeout_minutes" class="form-control" value="{{ timeout_minutes }}" min="1" required>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Update</button>
+    <a href="{{ url_for('settings.settings') }}" class="btn btn-secondary mt-2">Back</a>
+</form>
+{% endblock %}
+
