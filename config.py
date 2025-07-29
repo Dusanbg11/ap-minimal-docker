@@ -1,12 +1,19 @@
-# config.py
+import os
 from datetime import timedelta
 
 class Config:
-    MYSQL_HOST = 'localhost'
-    MYSQL_USER = 'apadmin'
-    MYSQL_PASSWORD = 'Simona15'  # koristi istu iz baze
-    MYSQL_DB = 'apminimal'
-    SECRET_KEY = 'Simona15'  # koristi neku jaku random šifru
-    # Default session timeout — 30 minuta
+    # MySQL connection parameters
+    MYSQL_HOST = os.environ.get("MYSQL_HOST", "db")  # 'db' is the Docker Compose service name
+    MYSQL_USER = os.environ.get("MYSQL_USER", "admin")
+    MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "admin")
+    MYSQL_DB = os.environ.get("MYSQL_DATABASE", "apminimal")
+    MYSQL_PORT = int(os.environ.get("MYSQL_PORT", 3306))
+
+    # Secret key for session encryption
+    SECRET_KEY = os.environ.get("SECRET_KEY", "default-secret-key")  # Replace in .env for production
+
+    # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
-    MAINTENANCE_MODE = False
+
+    # Maintenance mode flag (not used directly here, but available if needed)
+    MAINTENANCE_MODE = os.environ.get("MAINTENANCE_MODE", "False") == "True"

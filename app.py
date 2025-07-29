@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, session, flash, url_for
 from datetime import timedelta
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from config import Config
-from extensions import mysql  
+from extensions import mysql
+import os
 
 # Init app
 app = Flask(__name__)
@@ -11,16 +12,12 @@ app.config.from_object(Config)
 # Init MySQL
 mysql.init_app(app)
 
-print(app.url_map)
-
+# Globalna pre-request logika
 @app.before_request
-def make_session_permanent():
+def global_before_request():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=30)
 
-#maintanance mode#
-@app.before_request
-def check_maintenance_mode():
     if request.endpoint in ['login', 'static']:
         return  # Dozvoli login i statičke fajlove
 
@@ -38,6 +35,7 @@ def check_maintenance_mode():
     if result and result[0] == 1:
         return render_template('maintenance.html'), 503
 
+# Funkcija za proveru maintenance moda
 def is_maintenance_mode():
     cur = mysql.connection.cursor()
     cur.execute("SELECT maintenance_mode FROM settings WHERE id = 1")
@@ -46,22 +44,19 @@ def is_maintenance_mode():
     return result and result[0] == 1
 
 # Registracija blueprintova
+from routes.help import help_bp
 from routes.servers import servers_bp
 from routes.users import users_bp
 from routes.applications import applications_bp
 from routes.settings import settings_bp
 from routes.settings_admin import admin_bp
 
+app.register_blueprint(help_bp)
 app.register_blueprint(servers_bp)
 app.register_blueprint(users_bp)
 app.register_blueprint(applications_bp)
 app.register_blueprint(settings_bp)
 app.register_blueprint(admin_bp)
-
-#try:
-#    app.register_blueprint(admin_bp)
-#except Exception as e:
-#    print(f"[!!] Greška pri registraciji admin_bp: {e}")
 
 # Login/logout i dashboard
 @app.route('/', methods=['GET', 'POST'])
@@ -82,7 +77,6 @@ def login():
             flash('Incorrect username or password', 'danger')
     return render_template('login.html')
 
-
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -99,7 +93,22 @@ def logout():
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
 
-
+# Prvi put pokreni admin ako nema korisnika
+with app.app_context():
+    cur = mysql.connection.cursor()
+    cur.execute("SHOW TABLES LIKE 'users'")
+    if cur.fetchone():
+        cur.execute("SELECT COUNT(*) FROM users")
+        count = cur.fetchone()[0]
+        if count == 0:
+            username = os.environ.get("APP_ADMIN_USERNAME", "admin")
+            password = os.environ.get("APP_ADMIN_PASSWORD", "admin")
+            hashed_pw = generate_password_hash(password)
+            cur.execute("INSERT INTO users (username, password, is_admin) VALUES (%s, %s, %s)",
+                        (username, hashed_pw, True))
+            mysql.connection.commit()
+            print(f"[INFO] Admin nalog '{username}' je kreiran.")
+    cur.close()
 
 # Pokretanje aplikacije
 if __name__ == '__main__':

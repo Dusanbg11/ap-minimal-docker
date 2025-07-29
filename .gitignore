@@ -2,16 +2,36 @@
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 
 # Virtual environments
 venv/
 env/
+.venv/
 
 # pytest cache
 .pytest_cache/
 
 # Logs
 nohup.out
+*.log
 
-# VS Code
+# MySQL/MariaDB Docker volume (ako ikada mapiraš lokalno)
+db_data/
+
+# VS Code settings
 .vscode/
+
+# Env files
+.env
+.env.*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Other Python build artifacts
+build/
+dist/
+*.egg-info/
+

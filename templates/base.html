@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- Fix for DataTables dropdown overlapping -->
+
     <style>
         .dataTables_length select {
             width: auto !important;
@@ -65,8 +65,17 @@
 </div>
 
 <!-- Footer -->
-<footer class="bg-light text-center mt-auto py-3 border-top">
-    <small class="text-muted"> Created by Dušan Stevanovic & ChatGPT 🚀</small>
+<footer class="bg-light mt-auto border-top py-3">
+  <div class="container d-flex justify-content-between small">
+    <div>
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('help_bp.help_page') }}" class="text-decoration-none">📘 Documentation and manual</a>
+      {% endif %}
+    </div>
+    <div class="text-muted">
+      Created by Dušan Stevanović & ChatGPT 🚀
+    </div>
+  </div>
 </footer>
 
 <!-- jQuery -->
@@ -88,7 +97,6 @@
     }
 </script>
 
-<!-- DataTables default setup -->
 <script>
     $(document).ready(function () {
         $('#usersTable').DataTable({

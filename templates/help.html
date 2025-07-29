@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}User Manual{% endblock %}
+{% block content %}
+<style>
+  body {
+    scroll-behavior: smooth;
+  }
+
+  #backToDashboard {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .toc {
+    position: sticky;
+    top: 100px;
+  }
+
+  .toc a {
+    display: block;
+    padding: 3px 0;
+    color: #0d6efd;
+    text-decoration: none;
+  }
+
+  .toc a:hover {
+    text-decoration: underline;
+  }
+
+  .help-section {
+    scroll-margin-top: 90px;
+  }
+
+  .help-container {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .help-content {
+    flex: 1;
+  }
+
+  .toc-container {
+    width: 220px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    .help-container {
+      flex-direction: column;
+    }
+    .toc-container {
+      width: 100%;
+    }
+  }
+</style>
+
+<a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-sm" id="backToDashboard">Back to Dashboard</a>
+
+<div class="container mt-4">
+  <h1 class="mb-4">📘 User Manual</h1>
+  <p class="text-muted">A complete guide to AP Minimal's user and admin functionalities.</p>
+
+  <div class="help-container">
+    <!-- Left side – Table of Contents -->
+    <div class="toc-container">
+      <div class="border rounded p-3 bg-light toc">
+        <h6 class="fw-bold">Contents</h6>
+        <a href="#login">🔐 Logging In</a>
+        <a href="#accounts">👥 User Accounts</a>
+        <a href="#servers">🖥️ Server Management</a>
+        <a href="#applications">📦 Application Management</a>
+        <a href="#import_export">📤 Import & Export</a>
+        <a href="#csv_examples">🧾 CSV Format Examples</a>
+        <a href="#themes">🎨 Theme Settings</a>
+        <a href="#audit">📝 Audit Log</a>
+        <a href="#navigation">🔁 Navigation</a>
+      </div>
+    </div>
+
+    <!-- Right side – Main Content -->
+    <div class="help-content">
+      <section id="login" class="help-section">
+        <h3>🔐 Logging In</h3>
+        <p>Use your assigned username and password to log in. If login fails, verify credentials and contact your administrator if needed.</p>
+      </section>
+
+<section id="accounts" class="help-section mt-5">
+  <h3>👥 User Permissions</h3>
+
+  <h5>🧑 Regular Users Can:</h5>
+  <ul>
+    <li>Add, edit, and delete <strong>servers</strong>, <strong>applications</strong>, and <strong>other users</strong>.</li>
+    <li>Assign users to <strong>servers</strong> and <strong>applications</strong>.</li>
+    <li>Import data via CSV (servers, applications, users).</li>
+    <li>Export all tables to CSV format.</li>
+    <li>Change their own password via <strong>Settings → Change Password</strong>.</li>
+    <li>Switch between light/dark themes via <strong>Settings → Theme</strong>.</li>
+    <li>Download a backup of the database via <strong>Settings → Backup</strong>.</li>
+  </ul>
+
+  <h5>👑 Administrators Can:</h5>
+  <ul>
+    <li>Perform critical operations: <strong>Wipe All Data</strong> or wipe individual categories (users, apps, servers).</li>
+    <li>Manage accounts: add new users, assign/revoke admin rights, reset passwords.</li>
+    <li>View the full <strong>Audit Log</strong> of system activity.</li>
+  </ul>
+</section>
+
+
+      <section id="servers" class="help-section mt-5">
+        <h3>🖥️ Server Management</h3>
+        <ul>
+          <li>Use the form above the server table to add a new server.</li>
+          <li>Edit servers by clicking their name.</li>
+          <li>Delete servers using the trash icon.</li>
+          <li>Link/unlink users in the edit view.</li>
+	  <li>Use search, pagination, and sorting to manage larger server lists efficiently.</li>
+        </ul>
+      </section>
+
+      <section id="applications" class="help-section mt-5">
+        <h3>📦 Application Management</h3>
+        <ul>
+          <li>Add apps using the form above the table.</li>
+          <li>Optionally link apps to servers. This option is not included into csv application import. </li>
+          <li>Edit apps by clicking their name.</li>
+          <li>Assign users to apps in the detail view.</li>
+	  <li>Use search, pagination, and sorting to manage larger application lists efficiently.</li>
+        </ul>
+      </section>
+
+<section id="users" class="help-section mt-5">
+  <h3>👤 User Management</h3>
+  <ul>
+    <li>Add new users using the form above the user table.</li>
+    <li>Edit users by clicking on their name.</li>
+    <li>Delete users using the trash icon next to each user.</li>
+    <li>Assign users to <strong>servers</strong> and <strong>applications</strong> from the respective detail views.</li>
+    <li>Use search, pagination, and sorting to manage larger user lists efficiently.</li>
+  </ul>
+</section>
+
+
+      <section id="import_export" class="help-section mt-5">
+        <h3>📤 Import & Export</h3>
+        <ul>
+          <li>Export any table to CSV using the button above the list.</li>
+          <li>All users can import CSV files via <strong>Settings → Import</strong>.</li>
+          <li>CSV structure must match expected format – see examples below.</li>
+	  <li>Usage of field "role" can vary for different purposes.</li>
+        </ul>
+      </section>
+
+      <section id="csv_examples" class="help-section mt-5">
+        <h3>🧾 CSV Format Examples</h3>
+
+        <h5>Servers</h5>
+        <p>Expected columns: <code>name</code>, <code>ip_address</code>, <code>description</code></p>
+        <img src="{{ url_for('static', filename='examples/import_servers.png') }}" class="img-fluid border rounded mb-4" alt="Servers CSV Example">
+
+        <h5>Applications</h5>
+        <p>Expected columns: <code>name</code>, <code>version</code>, <code>server_id</code>, <code>description</code></p>
+        <img src="{{ url_for('static', filename='examples/import_applications.png') }}" class="img-fluid border rounded mb-4" alt="Applications CSV Example">
+
+        <h5>Users</h5>
+        <p>Expected columns: <code>full_name</code>, <code>email</code>, <code>note</code>, <code>role</code></p>
+        <img src="{{ url_for('static', filename='examples/import_users.png') }}" class="img-fluid border rounded" alt="Users CSV Example">
+      </section>
+
+      <section id="themes" class="help-section mt-5">
+        <h3>🎨 Theme Settings</h3>
+        <p>You can toggle between light and dark themes in Settings. The preference is saved and re-applied on future visits.</p>
+      </section>
+
+      <section id="audit" class="help-section mt-5">
+        <h3>📝 Audit Log</h3>
+        <ul>
+          <li>Only visible to admins.</li>
+          <li>Shows all system changes with timestamps, user, type of action, and affected entity.</li>
+          <li>Admins can set retention period (30/90/180/360 days).</li>
+	  <li>Logs can be exported in .txt format for further examination.</li>
+        </ul>
+      </section>
+
+      <section id="navigation" class="help-section mt-5">
+        <h3>🔁 Navigation</h3>
+        <ul>
+          <li>Click on entity names to view details (user, server, app).</li>
+          <li>Use "Back" buttons to return to previous page.</li>
+          <li>Search, filter, and sort supported on all tables.</li>
+        </ul>
+      </section>
+
+      <p class="text-center text-muted mt-5">For further assistance, contact your system administrator.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
