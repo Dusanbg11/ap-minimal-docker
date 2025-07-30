@@ -3,7 +3,11 @@ from datetime import timedelta
 from werkzeug.security import check_password_hash, generate_password_hash
 from config import Config
 from extensions import mysql
+from dotenv import load_dotenv
 import os
+
+# Load environment variables
+load_dotenv()
 
 # Init app
 app = Flask(__name__)
@@ -113,3 +117,4 @@ with app.app_context():
 # Pokretanje aplikacije
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+

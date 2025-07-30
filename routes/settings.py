@@ -46,12 +46,8 @@ def add_account():
     mysql.connection.commit()
     cur.close()
 
-    # Log action
-    action = "add"
-    target_type = "account"
-    target_name = username
-    details = f"User account '{username}' created (admin={bool(is_admin)})"
-    log_action(session['username'], action, target_type, target_name, details)
+    log_action(session['username'], "add", "account", username,
+               f"User account '{username}' created (admin={bool(is_admin)})")
 
     return redirect('/settings/accounts')
 
@@ -73,20 +69,16 @@ def edit_account(user_id):
             hashed_password = generate_password_hash(password)
             cur.execute("UPDATE users SET username=%s, password=%s, is_admin=%s WHERE id=%s",
                         (username, hashed_password, is_admin, user_id))
-
             details = f"Account '{username}' updated with new password and admin={bool(is_admin)}"
         else:
             cur.execute("UPDATE users SET username=%s, is_admin=%s WHERE id=%s",
                         (username, is_admin, user_id))
-
             details = f"Account '{username}' updated: admin={bool(is_admin)}"
 
         mysql.connection.commit()
         cur.close()
 
-        # Log action
         log_action(session['username'], 'edit', 'account', username, details)
-
         flash("Account updated successfully.", "success")
         return redirect('/settings/accounts')
 
@@ -124,12 +116,8 @@ def delete_account(user_id):
     mysql.connection.commit()
     cur.close()
 
-    # Log action (standard format)
-    action = "delete"
-    target_type = "account"
-    target_name = username
-    details = f"User account '{username}' deleted"
-    log_action(session['username'], action, target_type, target_name, details)
+    log_action(session['username'], "delete", "account", username,
+               f"User account '{username}' deleted")
 
     flash("Account deleted successfully.", "success")
     return redirect('/settings/accounts')
@@ -172,19 +160,21 @@ def csv_import():
         return render_template('access_denied.html'), 403
     return render_template('csv_import.html')
 
-# 💾 Database Backup
+
 @settings_bp.route('/backup')
 def backup_database():
     if 'user_id' not in session:
         return redirect('/')
 
     if not shutil.which("mysqldump"):
-        flash("Backup failed: 'mysqldump' utility not found on the server.", "danger")
+        flash("Backup failed: 'mysqldump' utility not found in the container.", "danger")
         return redirect('/settings')
 
+    db_host = "db"
     db_user = current_app.config['MYSQL_USER']
     db_password = current_app.config['MYSQL_PASSWORD']
     db_name = current_app.config['MYSQL_DB']
+
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"backup_{db_name}_{timestamp}.sql"
     filepath = os.path.join("/tmp", filename)
@@ -192,7 +182,8 @@ def backup_database():
     try:
         command = [
             "mysqldump",
-            f"-u{db_user}",
+            "-h", db_host,
+            "-u", db_user,
             f"-p{db_password}",
             db_name
         ]
@@ -209,3 +200,4 @@ def backup_database():
     except Exception as e:
         flash(f"Error during backup: {e}", "danger")
         return redirect('/settings')
+

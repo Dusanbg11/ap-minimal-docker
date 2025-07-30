@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   db:
-    image: mariadb
+    image: mariadb:11.1
+    container_name: ap-minimal-db
     restart: always
     env_file: .env
     environment:
@@ -12,18 +13,21 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Komentariši init.sql posle prvog pokretanja
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "3307:3306"  # Menjamo port da ne bi smetao postojećem MySQL-u
+      - "3306:3306"
 
   web:
     build: .
+    container_name: ap-minimal-web
     restart: always
     env_file: .env
-    ports:
-      - "5001:5000"  # Isto menjamo port da ne smeta tvojoj aplikaciji
     depends_on:
       - db
+    ports:
+      - "5000:5000"
+    command: ["./wait-for-it.sh", "db:3306", "gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
 
 volumes:
   db_data:
