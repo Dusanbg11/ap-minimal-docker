@@ -101,41 +101,71 @@ def export_user_links(user_id):
 
     cur = mysql.connection.cursor()
 
-    cur.execute("SELECT role FROM app_users WHERE id = %s", (user_id,))
-    result = cur.fetchone()
-    if not result:
-        return "User not found", 404
-    user_role = result[0]
-
+    # Osnovni podaci o korisniku (SECTOR umesto ROLE)
     cur.execute("""
-        SELECT s.name FROM servers s
-        JOIN user_server us ON s.id = us.server_id
+        SELECT full_name, email, note, sector
+        FROM app_users
+        WHERE id = %s
+    """, (user_id,))
+    user_row = cur.fetchone()
+    if not user_row:
+        cur.close()
+        return Response("User not found", status=404)
+
+    full_name, email, note, sector = user_row
+
+    # Linked servers
+    cur.execute("""
+        SELECT s.name, s.ip_address, s.description
+        FROM servers s
+        JOIN user_server us ON us.server_id = s.id
         WHERE us.user_id = %s
+        ORDER BY s.name
     """, (user_id,))
     servers = cur.fetchall()
 
+    # Linked applications + per-app rola (app_role)
     cur.execute("""
-        SELECT a.name FROM applications a
-        JOIN user_application ua ON a.id = ua.application_id
+        SELECT a.name, a.version, a.description, COALESCE(ua.app_role, '')
+        FROM applications a
+        JOIN user_application ua ON ua.application_id = a.id
         WHERE ua.user_id = %s
+        ORDER BY a.name
     """, (user_id,))
     applications = cur.fetchall()
 
     cur.close()
 
+    # CSV
     si = StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Type', 'Name', 'Role'])
+
+    # Header – korisnik
+    cw.writerow(['User Export'])
+    cw.writerow(['Full Name', full_name or ''])
+    cw.writerow(['Email', email or ''])
+    cw.writerow(['Note', note or ''])
+    cw.writerow(['Sector', sector or ''])
+    cw.writerow([])
+
+    # Servers sekcija
+    cw.writerow(['Linked Servers'])
+    cw.writerow(['Server Name', 'IP Address', 'Description'])
     for s in servers:
-        cw.writerow(['Server', s[0], user_role])
+        cw.writerow([(s[0] or ''), (s[1] or ''), (s[2] or '')])
+    cw.writerow([])
+
+    # Applications sekcija (sa per-app rolom)
+    cw.writerow(['Linked Applications'])
+    cw.writerow(['Application Name', 'Version', 'Description', 'Role (per app)'])
     for a in applications:
-        cw.writerow(['Application', a[0], user_role])
+        cw.writerow([(a[0] or ''), (a[1] or ''), (a[2] or ''), (a[3] or '')])
 
     output = si.getvalue()
     return Response(
         output,
         mimetype='text/csv',
-        headers={"Content-Disposition": f"attachment;filename=user_{user_id}_access.csv"}
+        headers={"Content-Disposition": f"attachment;filename=user_{user_id}_links.csv"}
     )
 
 # ------------------------
@@ -268,19 +298,20 @@ def delete_user(user_id):
 @users_bp.route('/export_all')
 def export_all_users():
     if 'user_id' not in session:
-        return redirect(url_for('users_bp.users'))
+        return redirect('/')
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT id, full_name, email, note, role FROM app_users")
+    cur.execute("SELECT id, full_name, email, note, sector FROM app_users")
     users = cur.fetchall()
     cur.close()
 
     si = StringIO()
     cw = csv.writer(si)
-    cw.writerow(['ID', 'Full Name', 'Email', 'Note', 'Role'])
+    cw.writerow(['ID', 'Full Name', 'Email', 'Note', 'Sector'])
 
     for u in users:
-        cw.writerow(u)
+        row = [val if val is not None else '' for val in u]
+        cw.writerow(row)
 
     output = si.getvalue()
     return Response(
@@ -288,4 +319,3 @@ def export_all_users():
         mimetype='text/csv',
         headers={"Content-Disposition": "attachment;filename=all_users.csv"}
     )
-

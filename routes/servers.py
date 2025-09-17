@@ -168,30 +168,38 @@ def edit_server(server_id):
     return render_template('edit_server.html', server=server)
 
 
-
 @servers_bp.route('/view/<int:server_id>')
 def view_server(server_id):
     if 'user_id' not in session:
         return redirect('/')
 
     cur = mysql.connection.cursor()
+
+    # meta podaci o serveru
     cur.execute("SELECT * FROM servers WHERE id = %s", (server_id,))
     server = cur.fetchone()
 
+    # linked users za ovaj server: koristimo sektor iz app_users (nekada 'role')
     cur.execute("""
-        SELECT au.id, au.full_name, au.email, au.note, au.role
+        SELECT
+            au.id,         -- 0
+            au.full_name,  -- 1
+            au.email,      -- 2
+            au.note,       -- 3
+            au.sector      -- 4  (ranije au.role)
         FROM app_users au
         JOIN user_server us ON au.id = us.user_id
         WHERE us.server_id = %s
     """, (server_id,))
     linked_users = cur.fetchall()
 
+    # svi potencijalni korisnici za assign
     cur.execute("SELECT id, full_name FROM app_users ORDER BY full_name ASC")
     all_users = cur.fetchall()
+
     cur.close()
 
     return render_template('view_server.html', server=server, users=linked_users, all_users=all_users)
-
 
 @servers_bp.route('/view/<int:server_id>/assign_user', methods=['POST'])
 def assign_user_to_server(server_id):

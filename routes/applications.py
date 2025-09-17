@@ -209,6 +209,7 @@ def view_application(application_id):
 
     cur = mysql.connection.cursor()
 
+    # meta podaci o aplikaciji
     cur.execute("""
         SELECT a.id, a.name, a.version, a.description, a.server_id, s.name
         FROM applications a
@@ -217,21 +218,33 @@ def view_application(application_id):
     """, (application_id,))
     application = cur.fetchone()
 
+    # linked users: sector (iz app_users) + app_role (iz user_application)
     cur.execute("""
-        SELECT au.id, au.full_name, au.email, au.note, au.role
+        SELECT
+            au.id,         -- 0
+            au.full_name,  -- 1
+            au.email,      -- 2
+            au.note,       -- 3
+            au.sector,     -- 4  (ranije au.role)
+            ua.app_role    -- 5  (rola u ovoj konkretnoj aplikaciji)
         FROM app_users au
         JOIN user_application ua ON au.id = ua.user_id
         WHERE ua.application_id = %s
     """, (application_id,))
     linked_users = cur.fetchall()
 
+    # svi potencijalni korisnici za assign
     cur.execute("SELECT id, full_name FROM app_users ORDER BY full_name ASC")
     all_users = cur.fetchall()
+
     cur.close()
 
-    return render_template('view_application.html', application=application, users=linked_users, all_users=all_users)
-
-
+    return render_template(
+        'view_application.html',
+        application=application,
+        users=linked_users,
+        all_users=all_users
+    )
 @applications_bp.route('/export_all')
 def export_all_applications_csv():
     if 'user_id' not in session:
@@ -267,28 +280,57 @@ def export_application_csv(application_id):
         return redirect('/')
 
     cur = mysql.connection.cursor()
+
+    # 1) Meta podaci o aplikaciji
     cur.execute("""
-        SELECT a.name, a.version, COALESCE(s.name, 'No server assinged') AS server_name, a.description
+        SELECT a.name, a.version, COALESCE(s.name, 'No server assigned') AS server_name, a.description
         FROM applications a
         LEFT JOIN servers s ON a.server_id = s.id
         WHERE a.id = %s
     """, (application_id,))
     app_data = cur.fetchone()
+
+    # 2) Povezani korisnici
+    cur.execute("""
+        SELECT
+            au.full_name,
+            au.email,
+            COALESCE(au.sector, '') AS sector,
+            COALESCE(ua.app_role, '') AS app_role,
+            COALESCE(au.note, '') AS note
+        FROM app_users au
+        JOIN user_application ua ON ua.user_id = au.id
+        WHERE ua.application_id = %s
+        ORDER BY au.full_name ASC
+    """, (application_id,))
+    linked_users = cur.fetchall()
+
     cur.close()
 
+    # 3) CSV output
     si = StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Name', 'Version', 'Server', 'Description'])
 
+    # Meta deo
     if app_data:
-        row = [field if field is not None else '' for field in app_data]
-        cw.writerow(row)
+        cw.writerow(['Application Details'])
+        cw.writerow(['Name', app_data[0] or ''])
+        cw.writerow(['Version', app_data[1] or ''])
+        cw.writerow(['Server', app_data[2] or ''])
+        cw.writerow(['Description', app_data[3] or ''])
+        cw.writerow([])  # prazan red
+
+    # Lista korisnika
+    cw.writerow(['Full Name', 'Email', 'Sector', 'Role (per app)', 'Note'])
+    for user in linked_users:
+        cw.writerow([user[0], user[1], user[2], user[3], user[4]])
 
     output = si.getvalue()
+    filename = f"application_{application_id}_export.csv"
     return Response(
         output,
         mimetype='text/csv',
-        headers={"Content-Disposition": f"attachment;filename=application_{application_id}_details.csv"}
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
     )
 
 @applications_bp.route('/<int:application_id>/assign_user', methods=['POST'])
@@ -297,6 +339,7 @@ def assign_user_to_application(application_id):
         return redirect('/')
 
     user_id = request.form.get('user_id')
+    app_role = (request.form.get('app_role') or '').strip()  # <--- NOVO polje iz forme
 
     if not user_id:
         flash("User not selected.", "danger")
@@ -305,29 +348,54 @@ def assign_user_to_application(application_id):
     try:
         cur = mysql.connection.cursor()
 
-        cur.execute("""
-            SELECT 1 FROM user_application WHERE user_id = %s AND application_id = %s
-        """, (user_id, application_id))
-        exists = cur.fetchone()
+        # da bismo logovali lepo ime app-a i user-a
+        cur.execute("SELECT name FROM applications WHERE id = %s", (application_id,))
+        app_name_row = cur.fetchone()
+        app_name = app_name_row[0] if app_name_row else f"AppID {application_id}"
 
-        if exists:
-            flash("User is already assigned to this application.", "warning")
+        cur.execute("SELECT full_name FROM app_users WHERE id = %s", (user_id,))
+        user_row = cur.fetchone()
+        user_name = user_row[0] if user_row else f"UserID {user_id}"
+
+        # postoji li veza?
+        cur.execute("""
+            SELECT app_role
+            FROM user_application
+            WHERE user_id = %s AND application_id = %s
+        """, (user_id, application_id))
+        existing = cur.fetchone()
+
+        if existing:
+            old_role = existing[0] or ''
+            new_role = app_role or None
+
+            if (old_role or '') == (app_role or ''):
+                flash("User is already assigned with the same role.", "info")
+            else:
+                cur.execute("""
+                    UPDATE user_application
+                    SET app_role = %s
+                    WHERE user_id = %s AND application_id = %s
+                """, (new_role, user_id, application_id))
+                mysql.connection.commit()
+
+                log_action(
+                    session['username'], 'edit', 'application', app_name,
+                    f"Updated role for user '{user_name}': '{old_role}' → '{app_role or ''}'"
+                )
+                flash("User role updated for this application.", "success")
         else:
+            # kreiraj vezu i (opciono) rolu
             cur.execute("""
-                INSERT INTO user_application (user_id, application_id)
-                VALUES (%s, %s)
-            """, (user_id, application_id))
+                INSERT INTO user_application (user_id, application_id, app_role)
+                VALUES (%s, %s, %s)
+            """, (user_id, application_id, app_role or None))
             mysql.connection.commit()
 
-            cur.execute("SELECT name FROM applications WHERE id = %s", (application_id,))
-            app_name_result = cur.fetchone()
-            app_name = app_name_result[0] if app_name_result else f"AppID {application_id}"
-
-            cur.execute("SELECT full_name FROM app_users WHERE id = %s", (user_id,))
-            user_result = cur.fetchone()
-            user_name = user_result[0] if user_result else f"UserID {user_id}"
-
-            log_action(session['username'], 'assign', 'application', app_name, f"Assigned user '{user_name}'")
+            log_action(
+                session['username'], 'assign', 'application', app_name,
+                f"Assigned user '{user_name}' with role '{app_role or ''}'"
+            )
             flash("User assigned successfully.", "success")
 
         cur.close()

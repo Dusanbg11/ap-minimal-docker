@@ -31,7 +31,8 @@
                         <th>Full Name</th>
                         <th>Email</th>
                         <th>Note</th>
-                        <th>Role</th>
+                        <th>Assignment</th>  {# app_users.sector #}
+                        <th>Role</th>        {# user_application.app_role #}
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -41,7 +42,8 @@
                         <td>{{ user[1] }}</td>
                         <td>{{ user[2] }}</td>
                         <td>{{ user[3] }}</td>
-                        <td>{{ user[4] }}</td>
+                        <td>{{ user[4] or '—' }}</td>  {# sector #}
+                        <td>{{ user[5] or '—' }}</td>  {# app_role #}
                         <td>
                             <form action="{{ url_for('applications_bp.remove_user_from_application', application_id=application[0], user_id=user[0]) }}" method="POST" style="display:inline;">
                                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this user?')">🗑 Remove</button>
@@ -61,16 +63,29 @@
     <h4>Assign a User to This Application</h4>
     <form action="{{ url_for('applications_bp.assign_user_to_application', application_id=application[0]) }}" method="POST" class="row g-3 mb-4 mt-2">
         <div class="col-md-6 col-lg-4">
-            <select name="user_id" class="form-select" required>
+            <label for="user_id" class="form-label">User</label>
+            <select id="user_id" name="user_id" class="form-select" required>
                 {% for user in all_users %}
                     <option value="{{ user[0] }}">{{ user[1] }}</option>
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-2">
+
+        <div class="col-md-6 col-lg-4">
+            <label for="app_role" class="form-label">Role for this application (optional)</label>
+            <input id="app_role" name="app_role" type="text" class="form-control" placeholder="e.g. admin, ops, finance">
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
             <button type="submit" class="btn btn-success w-100">Assign</button>
         </div>
     </form>
+
+    <p class="text-muted">
+        <strong>Note:</strong> <em>Assignment</em> shows the user's organizational sector (from their profile).
+        <em>Role</em> is specific to this application and is set when assigning the user.
+    </p>
 </div>
 
 {% endblock %}
+
