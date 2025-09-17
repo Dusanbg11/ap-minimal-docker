@@ -111,7 +111,7 @@ with app.app_context():
             cur.execute("INSERT INTO users (username, password, is_admin) VALUES (%s, %s, %s)",
                         (username, hashed_pw, True))
             mysql.connection.commit()
-            print(f"[INFO] Admin nalog '{username}' je kreiran.")
+            print(f"[INFO] Admin account '{username}' is created.")
     cur.close()
 
 # Pokretanje aplikacije

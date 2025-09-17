@@ -17,10 +17,10 @@
             <div class="row">
                 <div class="col-md-6">
                     <p><strong>Email:</strong> {{ user[2] }}</p>
-                    <p><strong>Note:</strong> {{ user[3] }}</p>
+                    <p><strong>Note:</strong> {{ user[3] or '—' }}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Role:</strong> {{ user[4] }}</p>
+                    <p><strong>Sector:</strong> {{ user[4] or '—' }}</p>
                 </div>
             </div>
         </div>
@@ -37,7 +37,7 @@
                         {% for s in servers %}
                         <li class="list-group-item">
                             <strong>{{ s[1] }}</strong> ({{ s[2] }})<br>
-                            <small class="text-muted">{{ s[3] }}</small>
+                            <small class="text-muted">{{ s[3] or '—' }}</small>
                         </li>
                         {% endfor %}
                     </ul>
@@ -58,7 +58,7 @@
                         {% for a in applications %}
                         <li class="list-group-item">
                             <strong>{{ a[1] }}</strong> v{{ a[2] }}<br>
-                            <small class="text-muted">{{ a[3] }}</small>
+                            <small class="text-muted">{{ a[3] or '—' }}</small>
                         </li>
                         {% endfor %}
                     </ul>
@@ -80,4 +80,3 @@
 </div>
 
 {% endblock %}
-

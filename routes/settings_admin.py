@@ -37,7 +37,7 @@ def admin_panel():
 def verify_password():
     if 'user_id' not in session or not session.get('is_admin'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
-    
+
     password = request.form.get('password')
     return jsonify({"success": True}) if verify_admin_password(password) \
         else jsonify({"success": False, "message": "Incorrect password."})
@@ -249,11 +249,106 @@ def handle_csv_import(table, required_fields, insert_sql):
 
 @admin_bp.route('/import-users-csv', methods=['POST'])
 def import_users_csv():
-    return handle_csv_import(
-        table='app_users',
-        required_fields=['full_name', 'email', 'note', 'role'],
-        insert_sql="INSERT INTO app_users (full_name, email, note, role) VALUES (%s, %s, %s, %s)"
-    )
+    """
+    Import for app_users:
+    - očekuje kolone: full_name, email, (optional) note, sector
+    - retro-kompatibilnost: ako nema 'sector' ali postoji 'role', koristi 'role' kao sector
+    - minimalni uslov: full_name + email
+    - upsert po email-u: insert ako ne postoji, update ako postoji i ima promene
+    """
+    if 'user_id' not in session or not session.get('is_admin'):
+        return redirect('/')
+
+    file = request.files.get('csv_file')
+    if not file or file.filename == '' or not file.filename.endswith('.csv'):
+        flash('Invalid CSV file.', 'danger')
+        return redirect('/settings/import')
+
+    try:
+        decoded_file = io.TextIOWrapper(file.stream, encoding='utf-8-sig', errors='replace')
+        reader = csv.DictReader(decoded_file)
+        # ukloni BOM iz headera ako postoji
+        if reader.fieldnames:
+            reader.fieldnames = [fn.lstrip('\ufeff') for fn in reader.fieldnames]
+
+        headers = [h.strip() for h in (reader.fieldnames or [])]
+        lower = [h.lower() for h in headers]
+
+        # minimalne kolone
+        if 'full_name' not in lower and 'name' not in lower:
+            flash('CSV must contain "full_name" (ili "name").', 'danger')
+            return redirect('/settings/import')
+        if 'email' not in lower:
+            flash('CSV must contain "email".', 'danger')
+            return redirect('/settings/import')
+
+        # helper za čitanje vrednosti bez obzira na case/alias
+        def getv(row, *keys):
+            for k in keys:
+                for col in row.keys():
+                    if col and col.strip().lower() == k.strip().lower():
+                        return (row[col] or '').strip()
+            return ''
+
+        inserted, updated, skipped = 0, 0, 0
+        cur = mysql.connection.cursor()
+
+        for row in reader:
+            full_name = getv(row, 'full_name', 'name')
+            email     = getv(row, 'email')
+            note      = getv(row, 'note')
+            sector    = getv(row, 'sector')
+            if not sector:
+                # legacy fallback
+                sector = getv(row, 'role')
+
+            if not full_name or not email:
+                skipped += 1
+                continue
+
+            # da li postoji user sa tim emailom?
+            cur.execute("SELECT id, full_name, email, note, sector FROM app_users WHERE email = %s", (email,))
+            existing = cur.fetchone()
+
+            if existing:
+                ex_id, ex_name, ex_email, ex_note, ex_sector = existing
+                need_update = ((full_name or '') != (ex_name or '')
+                               or (note or '') != (ex_note or '')
+                               or (sector or '') != (ex_sector or ''))
+                if need_update:
+                    cur.execute("""
+                        UPDATE app_users
+                        SET full_name=%s, note=%s, sector=%s
+                        WHERE id=%s
+                    """, (full_name, note or None, sector or None, ex_id))
+                    mysql.connection.commit()
+                    updated += 1
+                    try:
+                        log_action(session['username'], 'edit', 'user', full_name,
+                                   f"Admin import update: email={email}, sector='{sector or ''}'")
+                    except Exception:
+                        pass
+                else:
+                    skipped += 1
+            else:
+                cur.execute("""
+                    INSERT INTO app_users (full_name, email, note, sector)
+                    VALUES (%s, %s, %s, %s)
+                """, (full_name, email, note or None, sector or None))
+                mysql.connection.commit()
+                inserted += 1
+                try:
+                    log_action(session['username'], 'add', 'user', full_name,
+                               f"Admin import insert: email={email}, sector='{sector or ''}'")
+                except Exception:
+                    pass
+
+        cur.close()
+        flash(f'Users import finished: inserted={inserted}, updated={updated}, skipped={skipped}', 'success')
+    except Exception as e:
+        flash(f'Error importing CSV: {e}', 'danger')
+
+    return redirect('/settings/import')
 
 @admin_bp.route('/import-servers-csv', methods=['POST'])
 def import_servers_csv():
@@ -283,7 +378,8 @@ def generate_csv_template(header, filename):
 
 @admin_bp.route('/download-users-template')
 def download_users_template():
-    return generate_csv_template("name,email,note,role", "app_users_template.csv")
+    # novi header sa 'sector'; legacy 'role' više ne nudimo
+    return generate_csv_template("full_name,email,note,sector", "app_users_template.csv")
 
 @admin_bp.route('/download-servers-template')
 def download_servers_template():
@@ -292,4 +388,3 @@ def download_servers_template():
 @admin_bp.route('/download-applications-template')
 def download_applications_template():
     return generate_csv_template("name,version,description", "applications_template.csv")
-
