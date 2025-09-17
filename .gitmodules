@@ -1,0 +1,4 @@
+[submodule "ap-minimal"]
+	path = ap-minimal
+	url = git@github.com:Dusanbg11/ap-minimal.git
+	branch = main
