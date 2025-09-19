@@ -431,4 +431,3 @@ def remove_user_from_application(application_id, user_id):
         flash(f"An error occurred: {e}", "danger")
 
     return redirect(url_for('applications_bp.view_application', application_id=application_id))
-

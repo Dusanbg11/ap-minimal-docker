@@ -182,14 +182,14 @@ def edit_user(user_id):
         new_full_name = request.form['full_name']
         new_email = request.form['email']
         new_note = request.form['note']
-        new_role = request.form['role']
+        new_sector = request.form['sector']  # was 'role'
 
         # Get current values
-        cur.execute("SELECT full_name, email, note, role FROM app_users WHERE id = %s", (user_id,))
+        cur.execute("SELECT full_name, email, note, sector FROM app_users WHERE id = %s", (user_id,))
         old = cur.fetchone()
 
         if old:
-            old_full_name, old_email, old_note, old_role = old
+            old_full_name, old_email, old_note, old_sector = old
             changes = []
 
             if old_full_name != new_full_name:
@@ -198,8 +198,8 @@ def edit_user(user_id):
                 changes.append(f"Email: '{old_email}' → '{new_email}'")
             if (old_note or '') != (new_note or ''):
                 changes.append(f"Note: '{old_note or ''}' → '{new_note or ''}'")
-            if old_role != new_role:
-                changes.append(f"Role: '{old_role}' → '{new_role}'")
+            if (old_sector or '') != (new_sector or ''):
+                changes.append(f"Sector: '{old_sector or ''}' → '{new_sector or ''}'")
 
             if changes:
                 details = "; ".join(changes)
@@ -207,8 +207,8 @@ def edit_user(user_id):
 
         # Apply update
         cur.execute("""
-            UPDATE app_users SET full_name = %s, email = %s, note = %s, role = %s WHERE id = %s
-        """, (new_full_name, new_email, new_note, new_role, user_id))
+            UPDATE app_users SET full_name=%s, email=%s, note=%s, sector=%s WHERE id=%s
+        """, (new_full_name, new_email, new_note, new_sector, user_id))
         mysql.connection.commit()
         cur.close()
         flash(f'User "{new_full_name}" updated successfully.', 'success')
@@ -234,7 +234,7 @@ def add_user():
     full_name = request.form['full_name']
     email = request.form['email']
     note = request.form['note']
-    role = request.form['role']
+    sector = request.form['sector']  # was 'role'
     cur = mysql.connection.cursor()
 
     # Check for existing email
@@ -248,8 +248,8 @@ def add_user():
 
     # Insert new user
     cur.execute(
-        "INSERT INTO app_users (full_name, email, note, role) VALUES (%s, %s, %s, %s)",
-        (full_name, email, note, role)
+        "INSERT INTO app_users (full_name, email, note, sector) VALUES (%s, %s, %s, %s)",
+        (full_name, email, note, sector)
     )
     mysql.connection.commit()
 

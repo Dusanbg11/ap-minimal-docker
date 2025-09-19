@@ -102,9 +102,9 @@ with app.app_context():
     cur = mysql.connection.cursor()
     cur.execute("SHOW TABLES LIKE 'users'")
     if cur.fetchone():
-        cur.execute("SELECT COUNT(*) FROM users")
-        count = cur.fetchone()[0]
-        if count == 0:
+        cur.execute("SELECT COUNT(*) FROM users WHERE username = %s", ("admin",))
+        exists = cur.fetchone()[0]
+        if exists == 0:
             username = os.environ.get("APP_ADMIN_USERNAME", "admin")
             password = os.environ.get("APP_ADMIN_PASSWORD", "admin")
             hashed_pw = generate_password_hash(password)
@@ -112,9 +112,10 @@ with app.app_context():
                         (username, hashed_pw, True))
             mysql.connection.commit()
             print(f"[INFO] Admin account '{username}' is created.")
+        else:
+            print(f"[INFO] Admin account already exists.")
     cur.close()
 
 # Pokretanje aplikacije
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
-

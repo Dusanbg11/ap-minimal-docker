@@ -310,7 +310,7 @@ def export_users_for_server(server_id):
 
     # Fetch users linked to this server
     cur.execute("""
-        SELECT u.full_name, u.email, u.role
+        SELECT u.full_name, u.email, u.sector
         FROM app_users u
         JOIN user_server us ON u.id = us.user_id
         WHERE us.server_id = %s
@@ -320,7 +320,7 @@ def export_users_for_server(server_id):
 
     si = StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Full Name', 'Email', 'Role'])
+    cw.writerow(['Full Name', 'Email', 'Sector'])
     for user in users:
         cw.writerow(user)
 
@@ -330,4 +330,3 @@ def export_users_for_server(server_id):
         mimetype='text/csv',
         headers={"Content-Disposition": f"attachment; filename=server_{server_id}_users.csv"}
     )
-

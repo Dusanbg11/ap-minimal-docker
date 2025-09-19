@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, flash, url_for, request, Response, jsonify
 from extensions import mysql
-from routes.logging import log_action
+from routes.logger import log_action
 from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
 import csv

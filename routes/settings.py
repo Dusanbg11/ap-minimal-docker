@@ -182,13 +182,14 @@ def backup_database():
     try:
         command = [
             "mysqldump",
+            "--skip-ssl",              # ← umesto --ssl-mode=DISABLED
             "-h", db_host,
             "-u", db_user,
-            f"-p{db_password}",
+            f"--password={db_password}",
             db_name
         ]
-        with open(filepath, "w") as f:
-            subprocess.run(command, stdout=f, check=True)
+        with open(filepath, "w", encoding="utf-8") as f:
+            subprocess.run(command, stdout=f, stderr=subprocess.PIPE, check=True)
 
         return send_file(
             filepath,
@@ -197,7 +198,9 @@ def backup_database():
             download_name=filename
         )
 
+    except subprocess.CalledProcessError as e:
+        flash(f"Error during backup: mysqldump failed ({e.stderr.decode(errors='ignore')})", "danger")
+        return redirect('/settings')
     except Exception as e:
         flash(f"Error during backup: {e}", "danger")
         return redirect('/settings')
-
