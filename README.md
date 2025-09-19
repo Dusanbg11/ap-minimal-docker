@@ -41,7 +41,7 @@ sudo systemctl status docker
 
 ## 🔐 Clone the Repository
 ```bash
-git clone git@github.com:Dusanbg11/ap-minimal-docker.git
+git clone https://github.com/Dusanbg11/ap-minimal-docker.git
 cd ap-minimal-docker
 ```
 
