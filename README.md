@@ -90,3 +90,9 @@ docker ps
 ```
 
 You should see containers for the Flask app and the MariaDB database running.
+
+## ACCESS TO AP-MINIMAL
+To access appminimal in url type:
+youIPaddress:5000
+
+Default access parameters are admin / admin
