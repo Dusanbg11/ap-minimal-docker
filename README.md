@@ -73,12 +73,6 @@ python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 openssl rand -hex 32
 ```
 
-## 🧽 Disable init.sql After First Setup (Optional but Recommended)
-If you're running for the second time or on production, comment out the `init.sql` line in your `docker-compose.yml` file:
-```yaml
-# - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-```
-
 ## 📦 Start the Containers
 ```bash
 docker compose up -d
@@ -87,6 +81,12 @@ docker compose up -d
 ## 📋 Verify Everything Is Running
 ```bash
 docker ps
+```
+
+## 🧽 Disable init.sql After First Setup (Optional but Recommended)
+If you're running for the second time or on production, comment out the `init.sql` line in your `docker-compose.yml` file:
+```yaml
+# - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 ```
 
 You should see containers for the Flask app and the MariaDB database running.
