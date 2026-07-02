@@ -54,6 +54,7 @@ from routes.users import users_bp
 from routes.applications import applications_bp
 from routes.settings import settings_bp
 from routes.settings_admin import admin_bp
+from routes.databases import databases_bp
 
 app.register_blueprint(help_bp)
 app.register_blueprint(servers_bp)
@@ -61,6 +62,7 @@ app.register_blueprint(users_bp)
 app.register_blueprint(applications_bp)
 app.register_blueprint(settings_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(databases_bp)
 
 # Login/logout i dashboard
 @app.route('/', methods=['GET', 'POST'])

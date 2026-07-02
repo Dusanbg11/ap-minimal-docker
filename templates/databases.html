@@ -1,25 +1,25 @@
 {% extends 'base.html' %}
-{% block title %}Users{% endblock %}
+{% block title %}Databases{% endblock %}
 {% block content %}
 
-<h1 class="mb-4">Users</h1>
+<h1 class="mb-4">Databases</h1>
 <a href="/dashboard" class="btn btn-secondary mb-3">← Back to Dashboard</a>
 
-<form action="{{ url_for('users_bp.add_user') }}" method="POST" class="row g-3 mb-4">
+<form action="{{ url_for('databases_bp.add_database') }}" method="POST" class="row g-3 mb-4">
     <div class="col-md-3">
-        <input type="text" name="full_name" class="form-control" placeholder="Full Name" required>
-    </div>
-
-    <div class="col-md-3">
-        <input type="email" name="email" class="form-control" placeholder="Email" required>
-    </div>
-
-    <div class="col-md-3">
-        <input type="text" name="note" class="form-control" placeholder="Note">
+        <input type="text" name="name" class="form-control" placeholder="Database Name" required>
     </div>
 
     <div class="col-md-2">
-        <input type="text" name="sector" class="form-control" placeholder="Sector (e.g. Finance, Development, HR, etc...)">
+        <input type="text" name="version" class="form-control" placeholder="Version">
+    </div>
+
+    <div class="col-md-3">
+        <input type="text" name="server_ip" class="form-control" placeholder="Server IP Address">
+    </div>
+
+    <div class="col-md-3">
+        <textarea name="description" class="form-control" placeholder="Description"></textarea>
     </div>
 
     <div class="col-md-1">
@@ -27,10 +27,10 @@
     </div>
 </form>
 
-<!-- Controls above table -->
+<!-- Top controls -->
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <a href="{{ export_url }}" class="btn btn-outline-primary">
-        ⬇ Export All Users
+    <a href="{{ url_for('databases_bp.export_all_databases_csv') }}" class="btn btn-outline-success">
+        ⬇ Export All to CSV
     </a>
 
     <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -52,7 +52,7 @@
             </button>
 
             {% if search_query %}
-                <a href="{{ url_for('users_bp.users', per_page=per_page) }}" class="btn btn-outline-secondary">
+                <a href="{{ url_for('databases_bp.databases', per_page=per_page) }}" class="btn btn-outline-secondary">
                     Clear
                 </a>
             {% endif %}
@@ -65,7 +65,9 @@
 
             <select name="per_page" onchange="this.form.submit()" class="form-select" style="min-width: 150px;">
                 {% for option in [5, 10, 25, 50, 100] %}
-                    <option value="{{ option }}" {% if per_page == option %}selected{% endif %}>{{ option }} per page</option>
+                    <option value="{{ option }}" {% if per_page == option %}selected{% endif %}>
+                        {{ option }} per page
+                    </option>
                 {% endfor %}
             </select>
         </form>
@@ -73,38 +75,37 @@
     </div>
 </div>
 
-<!-- Users Table -->
 <table class="table table-bordered table-striped table-hover align-middle">
     <thead class="table-light">
         <tr>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Note</th>
-            <th>Sector</th>
-            <th style="width: 180px;">Actions</th>
+            <th>Name</th>
+            <th>Version</th>
+            <th>IP Address</th>
+            <th>Description</th>
+            <th>Actions</th>
         </tr>
     </thead>
 
     <tbody>
-        {% for user in app_users %}
+        {% for db in databases %}
         <tr>
             <td>
-                <a href="{{ url_for('users_bp.view_user', user_id=user[0]) }}">
-                    {{ user[1] }}
+                <a href="{{ url_for('databases_bp.view_database', database_id=db[0]) }}">
+                    {{ db[1] }}
                 </a>
             </td>
-            <td>{{ user[2] }}</td>
-            <td>{{ user[3] }}</td>
-            <td>{{ user[4] or '—' }}</td>
+            <td>{{ db[2] }}</td>
+            <td>{{ db[3] }}</td>
+            <td>{{ db[4] }}</td>
             <td>
-                <a href="{{ url_for('users_bp.edit_user', user_id=user[0]) }}" class="btn btn-sm btn-warning me-1">
+                <a href="{{ url_for('databases_bp.edit_database', database_id=db[0]) }}" class="btn btn-sm btn-warning me-1">
                     Edit
                 </a>
 
-                <form action="{{ url_for('users_bp.delete_user', user_id=user[0]) }}" method="POST" style="display:inline;">
+                <form action="{{ url_for('databases_bp.delete_database', database_id=db[0]) }}" method="POST" style="display:inline;">
                     <button type="submit"
                             class="btn btn-sm btn-danger"
-                            onclick="return confirm('Are you sure you want to delete this user?');">
+                            onclick="return confirm('Delete this database?');">
                         Delete
                     </button>
                 </form>
@@ -114,18 +115,15 @@
     </tbody>
 </table>
 
-<!-- Info + Pagination -->
 <div class="d-flex justify-content-between align-items-center mt-3">
-    <div>
-        <p class="mb-0">Showing {{ app_users|length }} of {{ total_entries }} entries</p>
-    </div>
+    <p class="mb-0">Showing {{ databases|length }} of {{ total }} entries</p>
 
     <nav>
         <ul class="pagination mb-0">
             {% for p in range(1, total_pages + 1) %}
                 <li class="page-item {% if p == page %}active{% endif %}">
                     <a class="page-link"
-                       href="{{ url_for('users_bp.users', search=search_query, page=p, per_page=per_page) }}">
+                       href="{{ url_for('databases_bp.databases', search=search_query, page=p, per_page=per_page) }}">
                         {{ p }}
                     </a>
                 </li>

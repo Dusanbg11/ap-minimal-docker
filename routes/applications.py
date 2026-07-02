@@ -7,6 +7,7 @@ import math
 
 applications_bp = Blueprint('applications_bp', __name__, url_prefix='/applications')
 
+
 @applications_bp.route('/')
 def applications():
     if 'user_id' not in session:
@@ -55,7 +56,7 @@ def applications():
     servers = cur.fetchall()
     cur.close()
 
-    total_pages = math.ceil(total / per_page)
+    total_pages = math.ceil(total / per_page) if total else 1
 
     return render_template(
         'applications.html',
@@ -67,6 +68,7 @@ def applications():
         total=total,
         total_pages=total_pages
     )
+
 
 @applications_bp.route('/add', methods=['POST'])
 def add_application():
@@ -113,6 +115,7 @@ def add_application():
     flash(f'Application "{name}" is added.', 'success')
     return redirect(url_for('applications_bp.applications'))
 
+
 @applications_bp.route('/edit/<int:application_id>', methods=['GET', 'POST'])
 def edit_application(application_id):
     if 'user_id' not in session:
@@ -142,14 +145,17 @@ def edit_application(application_id):
             if str(old_server_id or '') != str(new_server_id or ''):
                 old_server_name = 'None'
                 new_server_name = 'None'
+
                 if old_server_id:
                     cur.execute("SELECT name FROM servers WHERE id = %s", (old_server_id,))
                     res = cur.fetchone()
                     old_server_name = res[0] if res else f"ID {old_server_id}"
+
                 if new_server_id:
                     cur.execute("SELECT name FROM servers WHERE id = %s", (new_server_id,))
                     res = cur.fetchone()
                     new_server_name = res[0] if res else f"ID {new_server_id}"
+
                 changes.append(f"Server ('{old_server_name}') → ('{new_server_name}')")
 
             if changes:
@@ -157,9 +163,11 @@ def edit_application(application_id):
                 log_action(session['username'], 'edit', 'application', new_name, details)
 
         cur.execute("""
-            UPDATE applications SET name = %s, version = %s, description = %s, server_id = %s
+            UPDATE applications
+            SET name = %s, version = %s, description = %s, server_id = %s
             WHERE id = %s
         """, (new_name, new_version, new_desc, new_server_id, application_id))
+
         mysql.connection.commit()
         cur.close()
 
@@ -184,12 +192,14 @@ def edit_application(application_id):
 
     return render_template('edit_application.html', application=application, servers=servers)
 
+
 @applications_bp.route('/delete/<int:application_id>', methods=['POST'])
 def delete_application(application_id):
     if 'user_id' not in session:
         return redirect('/')
 
     cur = mysql.connection.cursor()
+
     cur.execute("SELECT name FROM applications WHERE id = %s", (application_id,))
     result = cur.fetchone()
     app_name = result[0] if result else 'Unknown'
@@ -197,10 +207,18 @@ def delete_application(application_id):
     cur.execute("DELETE FROM applications WHERE id = %s", (application_id,))
     mysql.connection.commit()
 
-    log_action(session['username'], 'delete', 'application', app_name, f"Application '{app_name}' (ID {application_id}) was deleted.")
+    log_action(
+        session['username'],
+        'delete',
+        'application',
+        app_name,
+        f"Application '{app_name}' (ID {application_id}) was deleted."
+    )
 
     cur.close()
+    flash(f'Application "{app_name}" deleted.', 'success')
     return redirect(url_for('applications_bp.applications'))
+
 
 @applications_bp.route('/view/<int:application_id>')
 def view_application(application_id):
@@ -209,7 +227,6 @@ def view_application(application_id):
 
     cur = mysql.connection.cursor()
 
-    # meta podaci o aplikaciji
     cur.execute("""
         SELECT a.id, a.name, a.version, a.description, a.server_id, s.name
         FROM applications a
@@ -218,22 +235,25 @@ def view_application(application_id):
     """, (application_id,))
     application = cur.fetchone()
 
-    # linked users: sector (iz app_users) + app_role (iz user_application)
+    if not application:
+        cur.close()
+        return "Application not found", 404
+
     cur.execute("""
         SELECT
-            au.id,         -- 0
-            au.full_name,  -- 1
-            au.email,      -- 2
-            au.note,       -- 3
-            au.sector,     -- 4  (ranije au.role)
-            ua.app_role    -- 5  (rola u ovoj konkretnoj aplikaciji)
+            au.id,
+            au.full_name,
+            au.email,
+            au.note,
+            au.sector,
+            ua.app_role
         FROM app_users au
         JOIN user_application ua ON au.id = ua.user_id
         WHERE ua.application_id = %s
+        ORDER BY au.full_name ASC
     """, (application_id,))
     linked_users = cur.fetchall()
 
-    # svi potencijalni korisnici za assign
     cur.execute("SELECT id, full_name FROM app_users ORDER BY full_name ASC")
     all_users = cur.fetchall()
 
@@ -245,34 +265,42 @@ def view_application(application_id):
         users=linked_users,
         all_users=all_users
     )
+
+
 @applications_bp.route('/export_all')
 def export_all_applications_csv():
     if 'user_id' not in session:
         return redirect('/')
 
     cur = mysql.connection.cursor()
+
     cur.execute("""
         SELECT a.name, a.version, COALESCE(s.name, 'No server assigned'), a.description
         FROM applications a
         LEFT JOIN servers s ON a.server_id = s.id
+        ORDER BY a.name ASC
     """)
     apps = cur.fetchall()
+
     cur.close()
 
     si = StringIO()
     cw = csv.writer(si)
+
     cw.writerow(['Name', 'Version', 'Server', 'Description'])
 
     for app in apps:
         row = [val if val is not None else '' for val in app]
         cw.writerow(row)
 
-    output = si.getvalue()
+    output = si.getvalue().encode('utf-8-sig')
+
     return Response(
         output,
-        mimetype='text/csv',
+        mimetype='text/csv; charset=utf-8',
         headers={"Content-Disposition": "attachment;filename=all_applications.csv"}
     )
+
 
 @applications_bp.route('/export/<int:application_id>')
 def export_application_csv(application_id):
@@ -281,7 +309,6 @@ def export_application_csv(application_id):
 
     cur = mysql.connection.cursor()
 
-    # 1) Meta podaci o aplikaciji
     cur.execute("""
         SELECT a.name, a.version, COALESCE(s.name, 'No server assigned') AS server_name, a.description
         FROM applications a
@@ -290,7 +317,6 @@ def export_application_csv(application_id):
     """, (application_id,))
     app_data = cur.fetchone()
 
-    # 2) Povezani korisnici
     cur.execute("""
         SELECT
             au.full_name,
@@ -307,31 +333,31 @@ def export_application_csv(application_id):
 
     cur.close()
 
-    # 3) CSV output
     si = StringIO()
     cw = csv.writer(si)
 
-    # Meta deo
     if app_data:
         cw.writerow(['Application Details'])
         cw.writerow(['Name', app_data[0] or ''])
         cw.writerow(['Version', app_data[1] or ''])
         cw.writerow(['Server', app_data[2] or ''])
         cw.writerow(['Description', app_data[3] or ''])
-        cw.writerow([])  # prazan red
+        cw.writerow([])
 
-    # Lista korisnika
     cw.writerow(['Full Name', 'Email', 'Sector', 'Role (per app)', 'Note'])
+
     for user in linked_users:
         cw.writerow([user[0], user[1], user[2], user[3], user[4]])
 
-    output = si.getvalue()
+    output = si.getvalue().encode('utf-8-sig')
     filename = f"application_{application_id}_export.csv"
+
     return Response(
         output,
-        mimetype='text/csv',
+        mimetype='text/csv; charset=utf-8',
         headers={"Content-Disposition": f"attachment;filename={filename}"}
     )
+
 
 @applications_bp.route('/<int:application_id>/assign_user', methods=['POST'])
 def assign_user_to_application(application_id):
@@ -339,16 +365,19 @@ def assign_user_to_application(application_id):
         return redirect('/')
 
     user_id = request.form.get('user_id')
-    app_role = (request.form.get('app_role') or '').strip()  # <--- NOVO polje iz forme
+    app_role = (request.form.get('app_role') or '').strip()
 
     if not user_id:
         flash("User not selected.", "danger")
         return redirect(url_for('applications_bp.view_application', application_id=application_id))
 
+    if not app_role:
+        flash("Role is required.", "danger")
+        return redirect(url_for('applications_bp.view_application', application_id=application_id))
+
     try:
         cur = mysql.connection.cursor()
 
-        # da bismo logovali lepo ime app-a i user-a
         cur.execute("SELECT name FROM applications WHERE id = %s", (application_id,))
         app_name_row = cur.fetchone()
         app_name = app_name_row[0] if app_name_row else f"AppID {application_id}"
@@ -357,7 +386,6 @@ def assign_user_to_application(application_id):
         user_row = cur.fetchone()
         user_name = user_row[0] if user_row else f"UserID {user_id}"
 
-        # postoji li veza?
         cur.execute("""
             SELECT app_role
             FROM user_application
@@ -367,42 +395,52 @@ def assign_user_to_application(application_id):
 
         if existing:
             old_role = existing[0] or ''
-            new_role = app_role or None
 
-            if (old_role or '') == (app_role or ''):
+            if old_role == app_role:
                 flash("User is already assigned with the same role.", "info")
             else:
                 cur.execute("""
                     UPDATE user_application
                     SET app_role = %s
                     WHERE user_id = %s AND application_id = %s
-                """, (new_role, user_id, application_id))
+                """, (app_role, user_id, application_id))
+
                 mysql.connection.commit()
 
                 log_action(
-                    session['username'], 'edit', 'application', app_name,
-                    f"Updated role for user '{user_name}': '{old_role}' → '{app_role or ''}'"
+                    session['username'],
+                    'edit',
+                    'application',
+                    app_name,
+                    f"Updated role for user '{user_name}': '{old_role}' → '{app_role}'"
                 )
+
                 flash("User role updated for this application.", "success")
         else:
-            # kreiraj vezu i (opciono) rolu
             cur.execute("""
                 INSERT INTO user_application (user_id, application_id, app_role)
                 VALUES (%s, %s, %s)
-            """, (user_id, application_id, app_role or None))
+            """, (user_id, application_id, app_role))
+
             mysql.connection.commit()
 
             log_action(
-                session['username'], 'assign', 'application', app_name,
-                f"Assigned user '{user_name}' with role '{app_role or ''}'"
+                session['username'],
+                'assign',
+                'application',
+                app_name,
+                f"Assigned user '{user_name}' with role '{app_role}'"
             )
+
             flash("User assigned successfully.", "success")
 
         cur.close()
+
     except Exception as e:
         flash(f"An error occurred: {e}", "danger")
 
     return redirect(url_for('applications_bp.view_application', application_id=application_id))
+
 
 @applications_bp.route('/<int:application_id>/remove_user/<int:user_id>', methods=['POST'])
 def remove_user_from_application(application_id, user_id):
@@ -412,7 +450,10 @@ def remove_user_from_application(application_id, user_id):
     try:
         cur = mysql.connection.cursor()
 
-        cur.execute("DELETE FROM user_application WHERE user_id = %s AND application_id = %s", (user_id, application_id))
+        cur.execute(
+            "DELETE FROM user_application WHERE user_id = %s AND application_id = %s",
+            (user_id, application_id)
+        )
         mysql.connection.commit()
 
         cur.execute("SELECT name FROM applications WHERE id = %s", (application_id,))
@@ -423,10 +464,18 @@ def remove_user_from_application(application_id, user_id):
         user_result = cur.fetchone()
         user_name = user_result[0] if user_result else f"UserID {user_id}"
 
-        log_action(session['username'], 'remove', 'application', app_name, f"Removed user '{user_name}'")
+        log_action(
+            session['username'],
+            'remove',
+            'application',
+            app_name,
+            f"Removed user '{user_name}'"
+        )
+
         flash("User removed from application.", "success")
 
         cur.close()
+
     except Exception as e:
         flash(f"An error occurred: {e}", "danger")
 

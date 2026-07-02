@@ -35,3 +35,5 @@ build/
 dist/
 *.egg-info/
 !.env.example
+*.sql
+!init.sql

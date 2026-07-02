@@ -138,7 +138,7 @@ CREATE TABLE `user_application` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `application_id` int(11) NOT NULL,
-  `app_role` varchar(50) DEFAULT NULL,     -- << dodato
+  `app_role` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`,`application_id`),
   KEY `application_id` (`application_id`),
@@ -182,6 +182,46 @@ CREATE TABLE `users` (
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `database_inventory`
+--
+
+DROP TABLE IF EXISTS `database_inventory`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `database_inventory` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `version` varchar(100) DEFAULT NULL,
+  `server_ip` varchar(100) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_database_entry` (`name`,`server_ip`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `user_database`
+--
+
+DROP TABLE IF EXISTS `user_database`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_database` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `database_id` int(11) NOT NULL,
+  `db_username` varchar(255) NOT NULL,
+  `db_grants` text NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_database` (`user_id`,`database_id`,`db_username`),
+  KEY `database_id` (`database_id`),
+  CONSTRAINT `fk_user_database_user` FOREIGN KEY (`user_id`) REFERENCES `app_users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_database_database` FOREIGN KEY (`database_id`) REFERENCES `database_inventory` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

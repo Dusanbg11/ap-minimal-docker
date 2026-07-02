@@ -60,6 +60,7 @@ def users():
         export_url=url_for('users_bp.export_all_users')
     )
 
+
 # ------------------------
 # View User Details
 # ------------------------
@@ -69,14 +70,20 @@ def view_user(user_id):
         return redirect('/')
 
     cur = mysql.connection.cursor()
+
     cur.execute("SELECT * FROM app_users WHERE id = %s", (user_id,))
     user = cur.fetchone()
+
+    if not user:
+        cur.close()
+        return "User not found", 404
 
     cur.execute("""
         SELECT s.id, s.name, s.ip_address, s.description
         FROM servers s
         JOIN user_server us ON s.id = us.server_id
         WHERE us.user_id = %s
+        ORDER BY s.name
     """, (user_id,))
     servers = cur.fetchall()
 
@@ -85,14 +92,39 @@ def view_user(user_id):
         FROM applications a
         JOIN user_application ua ON a.id = ua.application_id
         WHERE ua.user_id = %s
+        ORDER BY a.name
     """, (user_id,))
     applications = cur.fetchall()
 
+    cur.execute("""
+        SELECT
+            di.id,
+            di.name,
+            di.version,
+            di.server_ip,
+            di.description,
+            ud.db_username,
+            ud.db_grants
+        FROM database_inventory di
+        JOIN user_database ud ON di.id = ud.database_id
+        WHERE ud.user_id = %s
+        ORDER BY di.name
+    """, (user_id,))
+    databases = cur.fetchall()
+
     cur.close()
-    return render_template('view_user.html', user=user, servers=servers, applications=applications)
+
+    return render_template(
+        'view_user.html',
+        user=user,
+        servers=servers,
+        applications=applications,
+        databases=databases
+    )
+
 
 # ------------------------
-# Export User Links (Servers & Applications)
+# Export User Links (Servers, Applications & Databases)
 # ------------------------
 @users_bp.route('/export/<int:user_id>')
 def export_user_links(user_id):
@@ -101,20 +133,19 @@ def export_user_links(user_id):
 
     cur = mysql.connection.cursor()
 
-    # Osnovni podaci o korisniku (SECTOR umesto ROLE)
     cur.execute("""
         SELECT full_name, email, note, sector
         FROM app_users
         WHERE id = %s
     """, (user_id,))
     user_row = cur.fetchone()
+
     if not user_row:
         cur.close()
         return Response("User not found", status=404)
 
     full_name, email, note, sector = user_row
 
-    # Linked servers
     cur.execute("""
         SELECT s.name, s.ip_address, s.description
         FROM servers s
@@ -124,7 +155,6 @@ def export_user_links(user_id):
     """, (user_id,))
     servers = cur.fetchall()
 
-    # Linked applications + per-app rola (app_role)
     cur.execute("""
         SELECT a.name, a.version, a.description, COALESCE(ua.app_role, '')
         FROM applications a
@@ -134,13 +164,26 @@ def export_user_links(user_id):
     """, (user_id,))
     applications = cur.fetchall()
 
+    cur.execute("""
+        SELECT
+            di.name,
+            di.version,
+            di.server_ip,
+            di.description,
+            ud.db_username,
+            ud.db_grants
+        FROM database_inventory di
+        JOIN user_database ud ON ud.database_id = di.id
+        WHERE ud.user_id = %s
+        ORDER BY di.name
+    """, (user_id,))
+    databases = cur.fetchall()
+
     cur.close()
 
-    # CSV
     si = StringIO()
     cw = csv.writer(si)
 
-    # Header – korisnik
     cw.writerow(['User Export'])
     cw.writerow(['Full Name', full_name or ''])
     cw.writerow(['Email', email or ''])
@@ -148,25 +191,38 @@ def export_user_links(user_id):
     cw.writerow(['Sector', sector or ''])
     cw.writerow([])
 
-    # Servers sekcija
     cw.writerow(['Linked Servers'])
     cw.writerow(['Server Name', 'IP Address', 'Description'])
     for s in servers:
         cw.writerow([(s[0] or ''), (s[1] or ''), (s[2] or '')])
     cw.writerow([])
 
-    # Applications sekcija (sa per-app rolom)
     cw.writerow(['Linked Applications'])
     cw.writerow(['Application Name', 'Version', 'Description', 'Role (per app)'])
     for a in applications:
         cw.writerow([(a[0] or ''), (a[1] or ''), (a[2] or ''), (a[3] or '')])
+    cw.writerow([])
 
-    output = si.getvalue()
+    cw.writerow(['Linked Databases'])
+    cw.writerow(['Database Name', 'Version', 'IP Address', 'Description', 'DB Username', 'Grants'])
+    for d in databases:
+        cw.writerow([
+            d[0] or '',
+            d[1] or '',
+            d[2] or '',
+            d[3] or '',
+            d[4] or '',
+            d[5] or ''
+        ])
+
+    output = si.getvalue().encode('utf-8-sig')
+
     return Response(
         output,
-        mimetype='text/csv',
-        headers={"Content-Disposition": f"attachment;filename=user_{user_id}_links.csv"}
+        mimetype='text/csv; charset=utf-8',
+        headers={"Content-Disposition": f"attachment; filename=user_{user_id}_links.csv"}
     )
+
 
 # ------------------------
 # Edit User
@@ -182,9 +238,8 @@ def edit_user(user_id):
         new_full_name = request.form['full_name']
         new_email = request.form['email']
         new_note = request.form['note']
-        new_sector = request.form['sector']  # was 'role'
+        new_sector = request.form['sector']
 
-        # Get current values
         cur.execute("SELECT full_name, email, note, sector FROM app_users WHERE id = %s", (user_id,))
         old = cur.fetchone()
 
@@ -205,12 +260,15 @@ def edit_user(user_id):
                 details = "; ".join(changes)
                 log_action(session['username'], 'edit', 'user', new_email, details)
 
-        # Apply update
         cur.execute("""
-            UPDATE app_users SET full_name=%s, email=%s, note=%s, sector=%s WHERE id=%s
+            UPDATE app_users
+            SET full_name = %s, email = %s, note = %s, sector = %s
+            WHERE id = %s
         """, (new_full_name, new_email, new_note, new_sector, user_id))
+
         mysql.connection.commit()
         cur.close()
+
         flash(f'User "{new_full_name}" updated successfully.', 'success')
         return redirect(url_for('users_bp.users'))
 
@@ -223,6 +281,7 @@ def edit_user(user_id):
 
     return render_template('edit_user.html', user=user)
 
+
 # ------------------------
 # Add User
 # ------------------------
@@ -234,10 +293,10 @@ def add_user():
     full_name = request.form['full_name']
     email = request.form['email']
     note = request.form['note']
-    sector = request.form['sector']  # was 'role'
+    sector = request.form['sector']
+
     cur = mysql.connection.cursor()
 
-    # Check for existing email
     cur.execute("SELECT id FROM app_users WHERE email = %s", (email,))
     existing_user = cur.fetchone()
 
@@ -246,20 +305,21 @@ def add_user():
         cur.close()
         return redirect(url_for('users_bp.users'))
 
-    # Insert new user
     cur.execute(
         "INSERT INTO app_users (full_name, email, note, sector) VALUES (%s, %s, %s, %s)",
         (full_name, email, note, sector)
     )
+
     mysql.connection.commit()
 
-    # Log action
     details = f"User {full_name} is added"
     log_action(session['username'], 'add', 'user', full_name, details)
 
     flash(f'User "{full_name}" added successfully.', 'success')
     cur.close()
+
     return redirect(url_for('users_bp.users'))
+
 
 # ------------------------
 # Delete User
@@ -271,26 +331,26 @@ def delete_user(user_id):
 
     cur = mysql.connection.cursor()
 
-    # Fetch user details before deletion
     cur.execute("SELECT full_name, email, note FROM app_users WHERE id = %s", (user_id,))
     result = cur.fetchone()
 
     if result:
         full_name, email, note = result
 
-        # Log the deletion
         details = f"User {full_name} is removed"
         log_action(session['username'], 'delete', 'user', full_name, details)
 
-        # Delete the user
         cur.execute("DELETE FROM app_users WHERE id = %s", (user_id,))
         mysql.connection.commit()
+
         flash(f'User "{full_name}" deleted successfully.', 'success')
     else:
         flash("User not found.", 'danger')
 
     cur.close()
+
     return redirect(url_for('users_bp.users'))
+
 
 # ------------------------
 # Export All Users
@@ -307,15 +367,17 @@ def export_all_users():
 
     si = StringIO()
     cw = csv.writer(si)
+
     cw.writerow(['ID', 'Full Name', 'Email', 'Note', 'Sector'])
 
     for u in users:
         row = [val if val is not None else '' for val in u]
         cw.writerow(row)
 
-    output = si.getvalue()
+    output = si.getvalue().encode('utf-8-sig')
+
     return Response(
         output,
-        mimetype='text/csv',
-        headers={"Content-Disposition": "attachment;filename=all_users.csv"}
+        mimetype='text/csv; charset=utf-8',
+        headers={"Content-Disposition": "attachment; filename=all_users.csv"}
     )

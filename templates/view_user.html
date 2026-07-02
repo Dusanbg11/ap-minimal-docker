@@ -5,7 +5,10 @@
 <div class="container mt-5">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0"><i class="bi bi-person-circle me-2"></i> User: {{ user[1] }}</h1>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-person-circle me-2"></i> User: {{ user[1] }}
+        </h1>
+
         <a href="/users" class="btn btn-secondary">
             ← Back to Users
         </a>
@@ -13,12 +16,16 @@
 
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
-            <h5 class="card-title text-primary"><i class="bi bi-info-circle me-1"></i> User Information</h5>
+            <h5 class="card-title text-primary">
+                <i class="bi bi-info-circle me-1"></i> User Information
+            </h5>
+
             <div class="row">
                 <div class="col-md-6">
                     <p><strong>Email:</strong> {{ user[2] }}</p>
                     <p><strong>Note:</strong> {{ user[3] or '—' }}</p>
                 </div>
+
                 <div class="col-md-6">
                     <p><strong>Sector:</strong> {{ user[4] or '—' }}</p>
                 </div>
@@ -26,12 +33,16 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
+
         <!-- Linked Servers -->
-        <div class="col-md-6">
-            <div class="card mb-4 shadow-sm">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title text-success"><i class="bi bi-hdd-network me-1"></i> Linked Servers</h5>
+                    <h5 class="card-title text-success">
+                        <i class="bi bi-hdd-network me-1"></i> Linked Servers
+                    </h5>
+
                     {% if servers %}
                     <ul class="list-group list-group-flush">
                         {% for s in servers %}
@@ -49,15 +60,19 @@
         </div>
 
         <!-- Linked Applications -->
-        <div class="col-md-6">
-            <div class="card mb-4 shadow-sm">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title text-info"><i class="bi bi-box-seam me-1"></i> Linked Applications</h5>
+                    <h5 class="card-title text-info">
+                        <i class="bi bi-box-seam me-1"></i> Linked Applications
+                    </h5>
+
                     {% if applications %}
                     <ul class="list-group list-group-flush">
                         {% for a in applications %}
                         <li class="list-group-item">
-                            <strong>{{ a[1] }}</strong> v{{ a[2] }}<br>
+                            <strong>{{ a[1] }}</strong>
+                            {% if a[2] %} v{{ a[2] }}{% endif %}<br>
                             <small class="text-muted">{{ a[3] or '—' }}</small>
                         </li>
                         {% endfor %}
@@ -68,9 +83,48 @@
                 </div>
             </div>
         </div>
+
+        <!-- Linked Databases -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">
+                        <i class="bi bi-database me-1"></i> Linked Databases
+                    </h5>
+
+                    {% if databases %}
+                    <ul class="list-group list-group-flush">
+                        {% for d in databases %}
+                        <li class="list-group-item">
+                            <strong>{{ d[1] }}</strong>
+                            {% if d[2] %} v{{ d[2] }}{% endif %}
+                            {% if d[3] %}<br><small class="text-muted">IP: {{ d[3] }}</small>{% endif %}
+
+                            <br>
+                            <small class="text-muted">
+                                <strong>DB Username:</strong> {{ d[5] }}
+                            </small>
+
+                            <br>
+                            <small class="text-muted">
+                                <strong>Grants:</strong>
+                            </small>
+
+                            <pre class="mb-0 mt-1 small bg-light border rounded p-2"
+                                 style="white-space: pre-wrap;">{{ d[6] }}</pre>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No linked databases.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="text-end">
+    <div class="text-end mt-4">
         <a href="{{ url_for('users_bp.export_user_links', user_id=user[0]) }}"
            class="btn btn-outline-primary">
             <i class="bi bi-download me-1"></i> Export as CSV

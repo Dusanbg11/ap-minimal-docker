@@ -51,6 +51,7 @@
     .help-container {
       flex-direction: column;
     }
+
     .toc-container {
       width: 100%;
     }
@@ -72,6 +73,8 @@
         <a href="#accounts">👥 User Accounts</a>
         <a href="#servers">🖥️ Server Management</a>
         <a href="#applications">📦 Application Management</a>
+        <a href="#databases">🗄️ Database Management</a>
+        <a href="#users">👤 User Management</a>
         <a href="#import_export">📤 Import & Export</a>
         <a href="#csv_examples">🧾 CSV Format Examples</a>
         <a href="#themes">🎨 Theme Settings</a>
@@ -87,28 +90,27 @@
         <p>Use your assigned username and password to log in. If login fails, verify credentials and contact your administrator if needed.</p>
       </section>
 
-<section id="accounts" class="help-section mt-5">
-  <h3>👥 User Permissions</h3>
+      <section id="accounts" class="help-section mt-5">
+        <h3>👥 User Permissions</h3>
 
-  <h5>🧑 Regular Users Can:</h5>
-  <ul>
-    <li>Add, edit, and delete <strong>servers</strong>, <strong>applications</strong>, and <strong>other users</strong>.</li>
-    <li>Assign users to <strong>servers</strong> and <strong>applications</strong>.</li>
-    <li>Import data via CSV (servers, applications, users).</li>
-    <li>Export all tables to CSV format.</li>
-    <li>Change their own password via <strong>Settings → Change Password</strong>.</li>
-    <li>Switch between light/dark themes via <strong>Settings → Theme</strong>.</li>
-    <li>Download a backup of the database via <strong>Settings → Backup</strong>.</li>
-  </ul>
+        <h5>🧑 Regular Users Can:</h5>
+        <ul>
+          <li>Add, edit, and delete <strong>servers</strong>, <strong>applications</strong>, <strong>databases</strong>, and <strong>other users</strong>.</li>
+          <li>Assign users to <strong>servers</strong>, <strong>applications</strong>, and <strong>databases</strong>.</li>
+          <li>Import data via CSV where supported.</li>
+          <li>Export tables and linked users to CSV format.</li>
+          <li>Change their own password via <strong>Settings → Change Password</strong>.</li>
+          <li>Switch between light/dark themes via <strong>Settings → Theme</strong>.</li>
+          <li>Download a backup of the database via <strong>Settings → Backup</strong>.</li>
+        </ul>
 
-  <h5>👑 Administrators Can:</h5>
-  <ul>
-    <li>Perform critical operations: <strong>Wipe All Data</strong> or wipe individual categories (users, apps, servers).</li>
-    <li>Manage accounts: add new users, assign/revoke admin rights, reset passwords.</li>
-    <li>View the full <strong>Audit Log</strong> of system activity.</li>
-  </ul>
-</section>
-
+        <h5>👑 Administrators Can:</h5>
+        <ul>
+          <li>Perform critical operations: <strong>Wipe All Data</strong> or wipe individual categories.</li>
+          <li>Manage accounts: add new users, assign/revoke admin rights, reset passwords.</li>
+          <li>View the full <strong>Audit Log</strong> of system activity.</li>
+        </ul>
+      </section>
 
       <section id="servers" class="help-section mt-5">
         <h3>🖥️ Server Management</h3>
@@ -117,7 +119,7 @@
           <li>Edit servers by clicking their name.</li>
           <li>Delete servers using the trash icon.</li>
           <li>Link/unlink users in the edit view.</li>
-	  <li>Use search, pagination, and sorting to manage larger server lists efficiently.</li>
+          <li>Use search, pagination, and sorting to manage larger server lists efficiently.</li>
         </ul>
       </section>
 
@@ -125,24 +127,38 @@
         <h3>📦 Application Management</h3>
         <ul>
           <li>Add apps using the form above the table.</li>
-          <li>Optionally link apps to servers. This option is not included into csv application import. </li>
+          <li>Optionally link apps to servers. This option is not included into CSV application import.</li>
           <li>Edit apps by clicking their name.</li>
           <li>Assign users to apps in the detail view.</li>
-	  <li>Use search, pagination, and sorting to manage larger application lists efficiently.</li>
+          <li>Use search, pagination, and sorting to manage larger application lists efficiently.</li>
         </ul>
       </section>
 
-<section id="users" class="help-section mt-5">
-  <h3>👤 User Management</h3>
-  <ul>
-    <li>Add new users using the form above the user table.</li>
-    <li>Edit users by clicking on their name.</li>
-    <li>Delete users using the trash icon next to each user.</li>
-    <li>Assign users to <strong>servers</strong> and <strong>applications</strong> from the respective detail views.</li>
-    <li>Use search, pagination, and sorting to manage larger user lists efficiently.</li>
-  </ul>
-</section>
+      <section id="databases" class="help-section mt-5">
+        <h3>🗄️ Database Management</h3>
+        <ul>
+          <li>Add databases using the form above the database table.</li>
+          <li>Each database entry contains: <strong>name</strong>, <strong>version</strong>, <strong>IP address</strong>, and <strong>description</strong>.</li>
+          <li>Edit or delete databases using the action buttons on the right side of the table.</li>
+          <li>Click on a database name to open its detail view.</li>
+          <li>Assign users to databases from the database detail view.</li>
+          <li>For each assigned user, enter the <strong>DB username</strong> and <strong>grants</strong>.</li>
+          <li>Grants can be written in a simple format, for example: <code>db.* / SELECT, UPDATE...</code></li>
+          <li>Use <strong>Export All to CSV</strong> to export the database inventory.</li>
+          <li>Use <strong>Export Linked Users as CSV</strong> to export users assigned to a specific database.</li>
+        </ul>
+      </section>
 
+      <section id="users" class="help-section mt-5">
+        <h3>👤 User Management</h3>
+        <ul>
+          <li>Add new users using the form above the user table.</li>
+          <li>Edit users by clicking on their name.</li>
+          <li>Delete users using the trash icon next to each user.</li>
+          <li>Assign users to <strong>servers</strong>, <strong>applications</strong>, and <strong>databases</strong> from the respective detail views.</li>
+          <li>Use search, pagination, and sorting to manage larger user lists efficiently.</li>
+        </ul>
+      </section>
 
       <section id="import_export" class="help-section mt-5">
         <h3>📤 Import & Export</h3>
@@ -150,7 +166,7 @@
           <li>Export any table to CSV using the button above the list.</li>
           <li>All users can import CSV files via <strong>Settings → Import</strong>.</li>
           <li>CSV structure must match expected format – see examples below.</li>
-	  <li>Usage of field "role" can vary for different purposes.</li>
+          <li>Usage of field "role" can vary for different purposes.</li>
         </ul>
       </section>
 
@@ -180,17 +196,17 @@
         <ul>
           <li>Only visible to admins.</li>
           <li>Shows all system changes with timestamps, user, type of action, and affected entity.</li>
-          <li>Admins can set retention period (30/90/180/360 days).</li>
-	  <li>Logs can be exported in .txt format for further examination.</li>
+          <li>Admins can set retention period: 30, 90, 180, or 360 days.</li>
+          <li>Logs can be exported in .txt format for further examination.</li>
         </ul>
       </section>
 
       <section id="navigation" class="help-section mt-5">
         <h3>🔁 Navigation</h3>
         <ul>
-          <li>Click on entity names to view details (user, server, app).</li>
+          <li>Click on entity names to view details: user, server, app, or database.</li>
           <li>Use "Back" buttons to return to previous page.</li>
-          <li>Search, filter, and sort supported on all tables.</li>
+          <li>Search, filter, and sort are supported on tables where available.</li>
         </ul>
       </section>
 
@@ -199,4 +215,3 @@
   </div>
 </div>
 {% endblock %}
-

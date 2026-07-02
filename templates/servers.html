@@ -9,35 +9,59 @@
     <div class="col-md-3">
         <input type="text" name="name" class="form-control" placeholder="Server name" required>
     </div>
+
     <div class="col-md-3">
         <input type="text" name="ip_address" class="form-control" placeholder="IP address" required>
     </div>
+
     <div class="col-md-4">
         <textarea name="description" class="form-control" placeholder="Description"></textarea>
     </div>
+
     <div class="col-md-2">
         <button type="submit" class="btn btn-primary w-100">Add Server</button>
     </div>
 </form>
 
-<!-- Kontrole iznad tabele -->
+<!-- Controls above table -->
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
 
-    <!-- Levo: Export -->
+    <!-- Left: Export -->
     <a href="{{ url_for('servers_bp.export_servers_csv') }}" class="btn btn-outline-success">
         ⬇ Export to CSV
     </a>
 
-    <!-- Desno: Search + Per page -->
-    <div class="d-flex align-items-center gap-2">
+    <!-- Right: Search + Per page -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
 
-        <!-- Live Search -->
-        <input type="text" id="liveSearch" class="form-control" placeholder="Search..." style="min-width: 200px;">
+        <!-- Server-side search -->
+        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+            <input type="text"
+                   name="search"
+                   class="form-control"
+                   placeholder="Search..."
+                   style="min-width: 220px;"
+                   value="{{ search_query }}">
+
+            <input type="hidden" name="page" value="1">
+            <input type="hidden" name="per_page" value="{{ per_page }}">
+
+            <button type="submit" class="btn btn-outline-primary">
+                Search
+            </button>
+
+            {% if search_query %}
+                <a href="{{ url_for('servers_bp.servers', per_page=per_page) }}" class="btn btn-outline-secondary">
+                    Clear
+                </a>
+            {% endif %}
+        </form>
 
         <!-- Per page dropdown -->
         <form method="get" class="mb-0">
             <input type="hidden" name="search" value="{{ search_query }}">
             <input type="hidden" name="page" value="1">
+
             <select name="per_page" onchange="this.form.submit()" class="form-select" style="min-width: 150px;">
                 {% for option in [5, 10, 25, 50, 100] %}
                     <option value="{{ option }}" {% if per_page == option %}selected{% endif %}>
@@ -51,7 +75,7 @@
 </div>
 
 <!-- Servers Table -->
-<table class="table table-bordered table-striped table-hover">
+<table class="table table-bordered table-striped table-hover align-middle">
     <thead class="table-light">
         <tr>
             <th>Name</th>
@@ -60,16 +84,28 @@
             <th>Actions</th>
         </tr>
     </thead>
+
     <tbody>
         {% for server in servers %}
         <tr>
-            <td><a href="{{ url_for('servers_bp.view_server', server_id=server[0]) }}">{{ server[1] }}</a></td>
+            <td>
+                <a href="{{ url_for('servers_bp.view_server', server_id=server[0]) }}">
+                    {{ server[1] }}
+                </a>
+            </td>
             <td>{{ server[2] }}</td>
             <td>{{ server[3] }}</td>
             <td>
-                <a href="{{ url_for('servers_bp.edit_server', server_id=server[0]) }}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{{ url_for('servers_bp.edit_server', server_id=server[0]) }}" class="btn btn-sm btn-warning me-1">
+                    Edit
+                </a>
+
                 <form action="{{ url_for('servers_bp.delete_server', server_id=server[0]) }}" method="POST" style="display:inline;">
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this server?');">Delete</button>
+                    <button type="submit"
+                            class="btn btn-sm btn-danger"
+                            onclick="return confirm('Delete this server?');">
+                        Delete
+                    </button>
                 </form>
             </td>
         </tr>
@@ -77,34 +113,24 @@
     </tbody>
 </table>
 
-<!-- Info + Paginacija ispod tabele -->
+<!-- Info + Pagination -->
 <div class="d-flex justify-content-between align-items-center mt-3">
     <div>
         <p class="mb-0">Showing {{ servers|length }} of {{ total_entries }} entries</p>
     </div>
+
     <nav>
         <ul class="pagination mb-0">
             {% for p in range(1, total_pages + 1) %}
                 <li class="page-item {% if p == page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('servers_bp.servers', search=search_query, page=p, per_page=per_page) }}">{{ p }}</a>
+                    <a class="page-link"
+                       href="{{ url_for('servers_bp.servers', search=search_query, page=p, per_page=per_page) }}">
+                        {{ p }}
+                    </a>
                 </li>
             {% endfor %}
         </ul>
     </nav>
 </div>
 
-<!-- Live Search Script -->
-<script>
-document.getElementById('liveSearch').addEventListener('input', function () {
-    const filter = this.value.toLowerCase();
-    const rows = document.querySelectorAll('table tbody tr');
-
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(filter) ? '' : 'none';
-    });
-});
-</script>
-
 {% endblock %}
-

@@ -1,24 +1,25 @@
 {% extends 'base.html' %}
-{% block title %}Application Details{% endblock %}
+{% block title %}Database Details{% endblock %}
 {% block content %}
 
 <div class="container mt-4">
 
-    <h1 class="mb-3">Application: {{ application[1] }}</h1>
+    <h1 class="mb-3">Database: {{ database[1] }}</h1>
 
     <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{{ url_for('applications_bp.export_application_csv', application_id=application[0]) }}"
+        <a href="{{ url_for('databases_bp.export_database_csv', database_id=database[0]) }}"
            class="btn btn-outline-primary">
            ⬇ Export Linked Users as CSV
         </a>
 
-        <a href="{{ url_for('applications_bp.applications') }}" class="btn btn-secondary">
-            ← Back to Applications
+        <a href="{{ url_for('databases_bp.databases') }}" class="btn btn-secondary">
+            ← Back to Databases
         </a>
     </div>
 
-    <p><strong>Version:</strong> {{ application[2] }}</p>
-    <p><strong>Description:</strong> {{ application[3] }}</p>
+    <p><strong>Version:</strong> {{ database[2] }}</p>
+    <p><strong>IP Address:</strong> {{ database[3] }}</p>
+    <p><strong>Description:</strong> {{ database[4] }}</p>
 
     <hr class="my-4">
 
@@ -33,7 +34,8 @@
                         <th>Email</th>
                         <th>Note</th>
                         <th>Assignment</th>
-                        <th>Role</th>
+                        <th>DB Username</th>
+                        <th>Grants</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -45,11 +47,10 @@
                         <td>{{ user[2] }}</td>
                         <td>{{ user[3] }}</td>
                         <td>{{ user[4] or '—' }}</td>
-                        <td>{{ user[5] or '—' }}</td>
+                        <td>{{ user[5] }}</td>
+                        <td style="white-space: pre-wrap; min-width: 350px;">{{ user[6] }}</td>
                         <td>
-                            <form action="{{ url_for('applications_bp.remove_user_from_application', application_id=application[0], user_id=user[0]) }}"
-                                  method="POST"
-                                  style="display:inline;">
+                            <form action="{{ url_for('databases_bp.remove_user_from_database', database_id=database[0], user_id=user[0], db_username=user[5]) }}" method="POST" style="display:inline;">
                                 <button type="submit"
                                         class="btn btn-sm btn-outline-danger"
                                         onclick="return confirm('Are you sure you want to remove this user?')">
@@ -64,18 +65,18 @@
             </table>
         </div>
     {% else %}
-        <p class="text-muted mt-3">No users linked to this application.</p>
+        <p class="text-muted mt-3">No users linked to this database.</p>
     {% endif %}
 
     <hr class="my-5">
 
-    <h4>Assign a User to This Application</h4>
+    <h4>Assign a User to This Database</h4>
 
-    <form action="{{ url_for('applications_bp.assign_user_to_application', application_id=application[0]) }}"
+    <form action="{{ url_for('databases_bp.assign_user_to_database', database_id=database[0]) }}"
           method="POST"
           class="row g-3 mb-4 mt-2">
 
-        <div class="col-md-6 col-lg-4">
+        <div class="col-md-6 col-lg-3">
             <label for="user_id" class="form-label">User</label>
             <select id="user_id" name="user_id" class="form-select" required>
                 {% for user in all_users %}
@@ -84,14 +85,25 @@
             </select>
         </div>
 
-        <div class="col-md-6 col-lg-4">
-            <label for="app_role" class="form-label">Role for this application</label>
-            <input id="app_role"
-                   name="app_role"
+        <div class="col-md-6 col-lg-3">
+            <label for="db_username" class="form-label">DB Username</label>
+            <input id="db_username"
+                   name="db_username"
                    type="text"
                    class="form-control"
-                   placeholder="e.g. admin, finance, user, etc..."
+                   placeholder=""
                    required>
+        </div>
+
+        <div class="col-md-12 col-lg-6">
+            <label for="db_grants" class="form-label">Grants</label>
+            <textarea id="db_grants"
+                      name="db_grants"
+                      class="form-control"
+                      rows="5"
+                      placeholder="example:
+db.* / SELECT, UPDATE..."
+                      required></textarea>
         </div>
 
         <div class="col-12 text-center mt-3">
@@ -102,7 +114,7 @@
 
     <p class="text-muted">
         <strong>Note:</strong> <em>Assignment</em> shows the user's organizational sector.
-        <em>Role</em> is mandatory and specific to this application.
+        <em>DB Username</em> and <em>Grants</em> are specific to this database.
     </p>
 
 </div>
